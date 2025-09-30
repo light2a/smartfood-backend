@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartFoodAPI", "SmartFoodAPI\SmartFoodAPI.csproj", "{18694BEF-0A02-46E1-B370-4703B02A3FF6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAL", "DAL\DAL.csproj", "{56111A92-6911-48C5-8637-45E998E1BCE7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BLL", "BLL\BLL.csproj", "{7074FD40-4607-4803-9693-A482657AD64C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{18694BEF-0A02-46E1-B370-4703B02A3FF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18694BEF-0A02-46E1-B370-4703B02A3FF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18694BEF-0A02-46E1-B370-4703B02A3FF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18694BEF-0A02-46E1-B370-4703B02A3FF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56111A92-6911-48C5-8637-45E998E1BCE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56111A92-6911-48C5-8637-45E998E1BCE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56111A92-6911-48C5-8637-45E998E1BCE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56111A92-6911-48C5-8637-45E998E1BCE7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7074FD40-4607-4803-9693-A482657AD64C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7074FD40-4607-4803-9693-A482657AD64C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7074FD40-4607-4803-9693-A482657AD64C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7074FD40-4607-4803-9693-A482657AD64C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {596BA2E8-2E76-4678-A444-B5B606A4C076}
+	EndGlobalSection
+EndGlobal
