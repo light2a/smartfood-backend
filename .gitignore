@@ -401,7 +401,12 @@ FodyWeavers.xsd
 *.sln.iml
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 # End of https://www.toptal.com/developers/gitignore/api/csharp
+/SmartFoodAPI/SmartFoodAPI/appsettings.json
+=======
+# End of https://www.toptal.com/developers/gitignore/api/csharp
+>>>>>>> fa77305 (Base Code With Login, Register)
 /SmartFoodAPI/SmartFoodAPI/appsettings.json
 =======
 # End of https://www.toptal.com/developers/gitignore/api/csharp
