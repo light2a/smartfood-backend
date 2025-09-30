@@ -1,59 +1,54 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DAL.Models
 {
     public partial class SmartFoodContext : DbContext
     {
-        public SmartFoodContext(DbContextOptions<SmartFoodContext> options) : base(options)
-        {
-        }
+        public SmartFoodContext(DbContextOptions<SmartFoodContext> options) : base(options) { }
 
         public virtual DbSet<Account> Accounts { get; set; }
         public virtual DbSet<Role> Roles { get; set; }
+        public virtual DbSet<Area> Areas { get; set; }
+        public virtual DbSet<Seller> Sellers { get; set; }
+        public virtual DbSet<Restaurant> Restaurants { get; set; }
+        public virtual DbSet<MenuItem> MenuItems { get; set; }
+        public virtual DbSet<Order> Orders { get; set; }
+        public virtual DbSet<OrderItem> OrderItems { get; set; }
+        public virtual DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
+        public virtual DbSet<LoyaltyPoint> LoyaltyPoints { get; set; }
+        public virtual DbSet<Feedback> Feedbacks { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // === Account ===
             modelBuilder.Entity<Account>(entity =>
             {
-                entity.HasKey(e => e.AccountId).HasName("PK__Account__349DA5A646603AB1");
-
+                entity.HasKey(e => e.AccountId);
                 entity.ToTable("Account");
 
-                entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("(getdate())")
-                    .HasColumnType("datetime");
-
                 entity.Property(e => e.Email)
-                    .HasMaxLength(255)   // ✅ FIXED
+                    .HasMaxLength(255)
                     .IsRequired();
 
-                entity.Property(e => e.FullName)
-                    .HasMaxLength(255);  // ✅ FIXED
-
-                entity.Property(e => e.Password)
-                    .HasMaxLength(255)   // ✅ Recommended
-                    .IsRequired();
-
-                entity.Property(e => e.UpdateAt)
-                    .HasDefaultValueSql("(getdate())")
-                    .HasColumnType("datetime");
-
-                entity.HasOne(d => d.Role).WithMany(p => p.Accounts)
-                    .HasForeignKey(d => d.RoleId)
-                    .HasConstraintName("FK__Account__Roleid__3B75D760");
+                entity.Property(e => e.FullName).HasMaxLength(255);
+                entity.Property(e => e.Password).HasMaxLength(255).IsRequired();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
+                entity.Property(e => e.UpdateAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
 
                 entity.Property(e => e.ExternalProviderKey).HasMaxLength(100);
                 entity.Property(e => e.ExternalProvider).HasMaxLength(100);
+
+                entity.HasOne(d => d.Role)
+                    .WithMany(p => p.Accounts)
+                    .HasForeignKey(d => d.RoleId)
+                    .HasConstraintName("FK_Account_Role");
             });
 
+            // === Role ===
             modelBuilder.Entity<Role>(entity =>
             {
-                entity.HasKey(e => e.RoleId).HasName("PK__Role__8AFACE1ADC36AA35");
-
+                entity.HasKey(e => e.RoleId);
                 entity.ToTable("Role");
 
                 entity.Property(e => e.RoleName).HasMaxLength(20);
@@ -62,6 +57,145 @@ namespace DAL.Models
                     new Role { RoleId = 2, RoleName = "Seller" },
                     new Role { RoleId = 3, RoleName = "Admin" }
                 );
+            });
+
+            // === Area ===
+            modelBuilder.Entity<Area>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+                entity.Property(e => e.City).HasMaxLength(200);
+            });
+
+            // === Seller ===
+            modelBuilder.Entity<Seller>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.DisplayName).HasMaxLength(200).IsRequired();
+                entity.Property(e => e.Description).HasMaxLength(1000);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+
+                entity.HasOne(s => s.User)
+                    .WithMany()
+                    .HasForeignKey(s => s.UserAccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // === Restaurant ===
+            modelBuilder.Entity<Restaurant>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(250).IsRequired();
+                entity.Property(e => e.Address).HasMaxLength(500);
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+
+                entity.HasOne(r => r.Seller)
+                    .WithMany(s => s.Restaurants)
+                    .HasForeignKey(r => r.SellerId);
+
+                entity.HasOne(r => r.Area)
+                    .WithMany(a => a.Restaurants)
+                    .HasForeignKey(r => r.AreaId);
+            });
+
+            // === MenuItem ===
+            modelBuilder.Entity<MenuItem>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).HasMaxLength(250).IsRequired();
+                entity.Property(e => e.Description).HasMaxLength(1000);
+                entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.IsAvailable).HasDefaultValue(true);
+
+                entity.HasOne(m => m.Restaurant)
+                    .WithMany(r => r.MenuItems)
+                    .HasForeignKey(m => m.RestaurantId);
+            });
+
+            // === Order ===
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.TotalAmount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.ShippingFee).HasColumnType("decimal(18,2)").HasDefaultValue(0);
+                entity.Property(e => e.CommissionPercent).HasColumnType("decimal(5,2)").HasDefaultValue(0);
+                entity.Property(e => e.FinalAmount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+
+                entity.HasOne(o => o.Customer)
+                    .WithMany()
+                    .HasForeignKey(o => o.CustomerAccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(o => o.Restaurant)
+                    .WithMany(r => r.Orders)
+                    .HasForeignKey(o => o.RestaurantId);
+            });
+
+            // === OrderItem ===
+            modelBuilder.Entity<OrderItem>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Qty).HasDefaultValue(1);
+                entity.Property(e => e.UnitPrice).HasColumnType("decimal(18,2)");
+
+                entity.HasOne(oi => oi.Order)
+                    .WithMany(o => o.OrderItems)
+                    .HasForeignKey(oi => oi.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade); // keep cascade for orders
+
+                entity.HasOne(oi => oi.MenuItem)
+                    .WithMany(m => m.OrderItems)
+                    .HasForeignKey(oi => oi.MenuItemId)
+                    .OnDelete(DeleteBehavior.Restrict); // prevent multiple cascade paths
+            });
+
+            // === OrderStatusHistory ===
+            modelBuilder.Entity<OrderStatusHistory>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Status).HasMaxLength(100).IsRequired();
+                entity.Property(e => e.Note).HasMaxLength(500);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+
+                entity.HasOne(os => os.Order)
+                    .WithMany(o => o.StatusHistory)
+                    .HasForeignKey(os => os.OrderId);
+            });
+
+            // === LoyaltyPoint ===
+            modelBuilder.Entity<LoyaltyPoint>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Points).HasDefaultValue(0);
+                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("(sysutcdatetime())");
+
+                entity.HasOne(lp => lp.User)
+                    .WithMany()
+                    .HasForeignKey(lp => lp.UserAccountId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // === Feedback ===
+            modelBuilder.Entity<Feedback>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Rating).IsRequired();
+                entity.Property(e => e.Comment).HasMaxLength(1000);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+
+                entity.HasOne(f => f.Customer)
+                    .WithMany()
+                    .HasForeignKey(f => f.CustomerAccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(f => f.Restaurant)
+                    .WithMany(r => r.Feedbacks)
+                    .HasForeignKey(f => f.RestaurantId);
+
+                entity.HasOne(f => f.MenuItem)
+                    .WithMany(m => m.Feedbacks)
+                    .HasForeignKey(f => f.MenuItemId);
             });
 
             OnModelCreatingPartial(modelBuilder);
