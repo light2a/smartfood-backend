@@ -33,7 +33,6 @@ namespace SmartFoodAPI.Controllers
             return Ok(r);
         }
 
-        // Tạo mới (nên yêu cầu authorize cho seller/admin tuỳ quy định)
         [HttpPost]
         [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> Create([FromForm] CreateRestaurantRequest request, IFormFile? logo)
@@ -69,7 +68,7 @@ namespace SmartFoodAPI.Controllers
 
         // Toggle IsActive
         [HttpPatch("{id:int}/status")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> ToggleActive(int id, [FromQuery] bool isActive)
         {
             await _service.ToggleActiveAsync(id, isActive);
