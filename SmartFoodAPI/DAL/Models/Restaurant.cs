@@ -14,7 +14,6 @@ namespace DAL.Models
         public string Name { get; set; } = null!;
         public string? Address { get; set; }
         public bool IsActive { get; set; } = true;
-
         public virtual Seller Seller { get; set; }
         public virtual Area? Area { get; set; }
         public virtual ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();

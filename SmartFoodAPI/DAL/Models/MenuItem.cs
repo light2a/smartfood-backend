@@ -14,6 +14,7 @@ namespace DAL.Models
         public string? Description { get; set; }
         public decimal Price { get; set; }
         public bool IsAvailable { get; set; } = true;
+        public string? LogoUrl { get; set; } 
 
         public virtual Restaurant Restaurant { get; set; }
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();

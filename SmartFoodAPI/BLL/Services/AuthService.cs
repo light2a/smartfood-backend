@@ -16,10 +16,12 @@ namespace BLL.Services
     {
         private readonly IAccountRepository _accountRepository;
         private readonly IConfiguration _configuration;
+        private readonly ISellerRepository _sellerRepository;
 
-        public AuthService(IAccountRepository accountRepository, IConfiguration configuration)
+        public AuthService(IAccountRepository accountRepository, ISellerRepository sellerRepository, IConfiguration configuration)
         {
             _accountRepository = accountRepository;
+            _sellerRepository = sellerRepository; // assign it
             _configuration = configuration;
         }
 
@@ -32,7 +34,7 @@ namespace BLL.Services
             return GenerateJwtToken(account);
         }
 
-        public async Task<Account> RegisterAsync(string fullName, string email, string password)
+        public async Task<Account> RegisterAsync(string fullName, string email, string password, string phonenumber)
         {
             var existing = await _accountRepository.GetByEmailAsync(email);
             if (existing != null)
@@ -46,7 +48,8 @@ namespace BLL.Services
                 Email = email,
                 Password = hashedPassword,
                 IsActive = true,
-                RoleId = 1 // Default = Customer
+                RoleId = 1, // Default = Customer
+                PhoneNumber = phonenumber
             };
 
             return await _accountRepository.AddAsync(account);
@@ -74,5 +77,40 @@ namespace BLL.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        public async Task<Account> RegisterSellerAsync(string fullName, string email, string password, string phonenumber, string displayName)
+        {
+            var existing = await _accountRepository.GetByEmailAsync(email);
+            if (existing != null)
+                throw new Exception("Email already registered.");
+
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+
+            var account = new Account
+            {
+                FullName = fullName,
+                Email = email,
+                Password = hashedPassword,
+                IsActive = false, // inactive until admin approves
+                RoleId = 2,       // Seller role
+                PhoneNumber = phonenumber
+            };
+
+            var createdAccount = await _accountRepository.AddAsync(account);
+
+            // Create seller entry with minimal info
+            var seller = new Seller
+            {
+                UserAccountId = createdAccount.AccountId,
+                DisplayName = displayName,
+                Description = null // to be filled later via UpdateSeller API
+            };
+
+            // Save seller in database (assuming you have ISellerRepository)
+            await _sellerRepository.AddAsync(seller);
+
+            return createdAccount;
+        }
+
     }
 }

@@ -35,6 +35,7 @@ namespace DAL.Models
                 entity.Property(e => e.UpdateAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
                 entity.Property(e => e.ExternalProviderKey).HasMaxLength(100);
                 entity.Property(e => e.ExternalProvider).HasMaxLength(100);
+                entity.Property(e => e.PhoneNumber).HasMaxLength(15);
 
                 entity.HasOne(d => d.Role)
                     .WithMany(p => p.Accounts)
