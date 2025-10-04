@@ -13,6 +13,10 @@ namespace DAL.Models
         public int? AreaId { get; set; }
         public string Name { get; set; } = null!;
         public string? Address { get; set; }
+        public string? Coordinate { get; set; }
+        public DateTime OpenTime { get; set; }
+        public DateTime CloseTime { get; set; }
+        public string? Hotline { get; set; }    
         public bool IsActive { get; set; } = true;
         public string? LogoUrl { get; set; }
         public virtual Seller Seller { get; set; }

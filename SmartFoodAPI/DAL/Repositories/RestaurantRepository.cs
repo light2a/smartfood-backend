@@ -71,6 +71,16 @@ namespace DAL.Repositories
             existing.IsActive = isActive;
             await _context.SaveChangesAsync();
         }
+        public async Task<IEnumerable<Restaurant>> SearchByMenuItemNameAsync(string keyword)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+                return await _context.Restaurants.AsNoTracking().ToListAsync();
+
+            return await _context.Restaurants
+                .Where(r => r.MenuItems.Any(m => m.Name.Contains(keyword)))
+                .AsNoTracking()
+                .ToListAsync();
+        }
     }
 }
 
