@@ -25,7 +25,7 @@ namespace BLL.Services
             return list.Select(ToDto);
         }
 
-        public async Task<RestaurantDto?> GetByIdAsync(Guid id)
+        public async Task<RestaurantDto?> GetByIdAsync(int id)
         {
             var r = await _repo.GetByIdAsync(id);
             return r == null ? null : ToDto(r);
@@ -35,7 +35,6 @@ namespace BLL.Services
         {
             var model = new Restaurant
             {
-                Id = Guid.NewGuid(),
                 SellerId = request.SellerId,
                 AreaId = request.AreaId,
                 Name = request.Name,
@@ -46,7 +45,7 @@ namespace BLL.Services
             return ToDto(created);
         }
 
-        public async Task UpdateAsync(Guid id, UpdateRestaurantRequest request)
+        public async Task UpdateAsync(int id, UpdateRestaurantRequest request)
         {
             var existing = await _repo.GetByIdAsync(id);
             if (existing == null) throw new KeyNotFoundException("Restaurant not found");
@@ -61,7 +60,7 @@ namespace BLL.Services
         }
 
 
-        public async Task DeleteAsync(Guid id)
+        public async Task DeleteAsync(int id)
         {
             await _repo.DeleteAsync(id);
         }
@@ -81,7 +80,7 @@ namespace BLL.Services
             return list.Select(ToDto);
         }
 
-        public async Task ToggleActiveAsync(Guid id, bool isActive)
+        public async Task ToggleActiveAsync(int id, bool isActive)
         {
             await _repo.ToggleActiveAsync(id, isActive);
         }

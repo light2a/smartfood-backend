@@ -10,11 +10,11 @@ namespace BLL.IServices
     public interface IRestaurantService
     {
         Task<IEnumerable<RestaurantDto>> GetAllAsync();
-        Task<RestaurantDto?> GetByIdAsync(Guid id);
+        Task<RestaurantDto?> GetByIdAsync(int id);
         Task<RestaurantDto> CreateAsync(CreateRestaurantRequest request);
-        Task UpdateAsync(Guid id,UpdateRestaurantRequest request);
-        Task DeleteAsync(Guid id);
+        Task UpdateAsync(int id,UpdateRestaurantRequest request);
+        Task DeleteAsync(int id);
         Task<IEnumerable<RestaurantDto>> SearchAsync(string? keyword);
-        Task ToggleActiveAsync(Guid id, bool isActive);
+        Task ToggleActiveAsync(int id, bool isActive);
     }
 }

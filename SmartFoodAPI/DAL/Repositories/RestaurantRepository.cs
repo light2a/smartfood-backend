@@ -21,21 +21,17 @@ namespace DAL.Repositories
 
         public async Task<IEnumerable<Restaurant>> GetAllAsync()
         {
-            return await _context.Restaurants
-                .AsNoTracking()
-                .ToListAsync();
+            return await _context.Restaurants.AsNoTracking().ToListAsync();
         }
 
-        public async Task<Restaurant?> GetByIdAsync(Guid id)
+        public async Task<Restaurant?> GetByIdAsync(int id)
         {
             return await _context.Restaurants
-                //.Include(r => r.MenuItems) // nếu cần include
                 .FirstOrDefaultAsync(r => r.Id == id);
         }
 
         public async Task<Restaurant> AddAsync(Restaurant restaurant)
         {
-            if (restaurant.Id == Guid.Empty) restaurant.Id = Guid.NewGuid();
             _context.Restaurants.Add(restaurant);
             await _context.SaveChangesAsync();
             return restaurant;
@@ -47,14 +43,15 @@ namespace DAL.Repositories
             await _context.SaveChangesAsync();
         }
 
-
-        public async Task DeleteAsync(Guid id)
+        public async Task DeleteAsync(int id)
         {
             var existing = await _context.Restaurants.FindAsync(id);
             if (existing == null) throw new KeyNotFoundException("Restaurant not found");
+
             _context.Restaurants.Remove(existing);
             await _context.SaveChangesAsync();
         }
+
         public async Task<IEnumerable<Restaurant>> SearchAsync(string? keyword)
         {
             if (string.IsNullOrWhiteSpace(keyword))
@@ -66,7 +63,7 @@ namespace DAL.Repositories
                 .ToListAsync();
         }
 
-        public async Task ToggleActiveAsync(Guid id, bool isActive)
+        public async Task ToggleActiveAsync(int id, bool isActive)
         {
             var existing = await _context.Restaurants.FindAsync(id);
             if (existing == null) throw new KeyNotFoundException("Restaurant not found");
