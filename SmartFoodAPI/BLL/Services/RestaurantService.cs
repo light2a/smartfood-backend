@@ -65,7 +65,8 @@ namespace BLL.Services
         public async Task UpdateAsync(int id, UpdateRestaurantRequest request, IFormFile? logo)
         {
             var existing = await _repo.GetByIdAsync(id);
-            if (existing == null) throw new KeyNotFoundException("Restaurant not found");
+            if (existing == null) 
+                throw new KeyNotFoundException("Restaurant not found");
 
             existing.Name = request.Name;
             existing.Address = request.Address;
@@ -104,6 +105,19 @@ namespace BLL.Services
         public async Task ToggleActiveAsync(int id, bool isActive)
         {
             await _repo.ToggleActiveAsync(id, isActive);
+        }
+        public async Task<IEnumerable<RestaurantDto>> SearchByMenuItemNameAsync(string keyword)
+        {
+            var restaurants = await _repo.SearchByMenuItemNameAsync(keyword);
+
+            return restaurants.Select(r => new RestaurantDto
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Address = r.Address,
+                IsActive = r.IsActive,
+                LogoUrl = r.LogoUrl
+            });
         }
     }
 }

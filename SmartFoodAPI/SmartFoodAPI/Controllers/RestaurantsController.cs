@@ -9,7 +9,6 @@ namespace SmartFoodAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class RestaurantsController : ControllerBase
     {
         private readonly IRestaurantService _service;
@@ -61,6 +60,7 @@ namespace SmartFoodAPI.Controllers
         }
         // Search by name or address
         [HttpGet("search")]
+        [AllowAnonymous]
         public async Task<IActionResult> Search([FromQuery] string? keyword)
         {
             var list = await _service.SearchAsync(keyword);
@@ -69,11 +69,17 @@ namespace SmartFoodAPI.Controllers
 
         // Toggle IsActive
         [HttpPatch("{id:int}/status")]
-        [Authorize(Roles = "Admin,Seller")]
+        [AllowAnonymous]
         public async Task<IActionResult> ToggleActive(int id, [FromQuery] bool isActive)
         {
             await _service.ToggleActiveAsync(id, isActive);
             return NoContent();
+        }
+        [HttpGet("search-by-menu")]
+        public async Task<IActionResult> SearchByMenuItem([FromQuery] string keyword)
+        {
+            var result = await _service.SearchByMenuItemNameAsync(keyword);
+            return Ok(result);
         }
     }
 }
