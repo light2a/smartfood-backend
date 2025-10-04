@@ -10,11 +10,11 @@ namespace DAL.IRepositories
     public interface IRestaurantRepository
     {
         Task<IEnumerable<Restaurant>> GetAllAsync();
-        Task<Restaurant?> GetByIdAsync(Guid id);
+        Task<Restaurant?> GetByIdAsync(int id);
         Task<Restaurant> AddAsync(Restaurant restaurant);
         Task UpdateAsync(Restaurant restaurant);
-        Task DeleteAsync(Guid id);
+        Task DeleteAsync(int id);
         Task<IEnumerable<Restaurant>> SearchAsync(string? keyword);
-        Task ToggleActiveAsync(Guid id, bool isActive);
+        Task ToggleActiveAsync(int id, bool isActive);
     }
 }

@@ -26,8 +26,8 @@ namespace SmartFoodAPI.Controllers
             return Ok(list);
         }
 
-        [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetById(Guid id)
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
         {
             var r = await _service.GetByIdAsync(id);
             if (r == null) return NotFound();
@@ -43,18 +43,18 @@ namespace SmartFoodAPI.Controllers
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
-        [HttpPut("{id:guid}")]
+        [HttpPut("{id:int}")]
         [Authorize(Roles = "Admin,Seller")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRestaurantRequest request)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateRestaurantRequest request)
         {
             await _service.UpdateAsync(id, request);
             return NoContent();
         }
 
         // Xoá
-        [HttpDelete("{id:guid}")]
+        [HttpDelete("{id:int}")]
         [Authorize(Roles = "Admin,Seller")]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete(int id)
         {
             await _service.DeleteAsync(id);
             return NoContent();
@@ -68,9 +68,9 @@ namespace SmartFoodAPI.Controllers
         }
 
         // Toggle IsActive
-        [HttpPatch("{id:guid}/status")]
+        [HttpPatch("{id:int}/status")]
         [Authorize(Roles = "Admin,Seller")]
-        public async Task<IActionResult> ToggleActive(Guid id, [FromQuery] bool isActive)
+        public async Task<IActionResult> ToggleActive(int id, [FromQuery] bool isActive)
         {
             await _service.ToggleActiveAsync(id, isActive);
             return NoContent();
