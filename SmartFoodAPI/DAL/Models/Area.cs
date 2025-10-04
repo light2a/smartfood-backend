@@ -8,7 +8,7 @@ namespace DAL.Models
 {
     public class Area
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public string Name { get; set; } = null!;
         public string? City { get; set; }
 

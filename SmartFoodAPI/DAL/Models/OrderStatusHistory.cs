@@ -8,8 +8,8 @@ namespace DAL.Models
 {
     public class OrderStatusHistory
     {
-        public Guid Id { get; set; }
-        public Guid OrderId { get; set; }
+        public int Id { get; set; }
+        public int OrderId { get; set; }
         public string Status { get; set; } = null!;
         public string? Note { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

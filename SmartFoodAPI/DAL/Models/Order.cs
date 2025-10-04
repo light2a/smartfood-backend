@@ -8,9 +8,9 @@ namespace DAL.Models
 {
     public class Order
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public int CustomerAccountId { get; set; } // FK to Account
-        public Guid RestaurantId { get; set; }
+        public int   RestaurantId { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal ShippingFee { get; set; }
         public decimal CommissionPercent { get; set; }

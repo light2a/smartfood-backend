@@ -8,10 +8,10 @@ namespace DAL.Models
 {
     public class Feedback
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public int CustomerAccountId { get; set; } // FK to Account
-        public Guid? RestaurantId { get; set; }
-        public Guid? MenuItemId { get; set; }
+        public int? RestaurantId { get; set; }
+        public int? MenuItemId { get; set; }
         public int Rating { get; set; } // 1-5
         public string? Comment { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

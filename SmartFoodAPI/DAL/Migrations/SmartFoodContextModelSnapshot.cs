@@ -84,9 +84,11 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.Area", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("City")
                         .HasMaxLength(200)
@@ -104,9 +106,11 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.Feedback", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Comment")
                         .HasMaxLength(1000)
@@ -120,14 +124,14 @@ namespace DAL.Migrations
                     b.Property<int>("CustomerAccountId")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("MenuItemId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("MenuItemId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Rating")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("RestaurantId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("RestaurantId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -142,9 +146,11 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.LoyaltyPoint", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("Points")
                         .ValueGeneratedOnAdd()
@@ -168,9 +174,11 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.MenuItem", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
@@ -189,8 +197,8 @@ namespace DAL.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid>("RestaurantId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -201,9 +209,11 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.Order", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("CommissionPercent")
                         .ValueGeneratedOnAdd()
@@ -221,8 +231,8 @@ namespace DAL.Migrations
                     b.Property<decimal>("FinalAmount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid>("RestaurantId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("ShippingFee")
                         .ValueGeneratedOnAdd()
@@ -243,15 +253,17 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.OrderItem", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
 
-                    b.Property<Guid>("MenuItemId")
-                        .HasColumnType("uniqueidentifier");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("MenuItemId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
 
                     b.Property<int>("Qty")
                         .ValueGeneratedOnAdd()
@@ -272,9 +284,11 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.OrderStatusHistory", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -285,8 +299,8 @@ namespace DAL.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<Guid>("OrderId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -302,16 +316,18 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.Restaurant", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<Guid?>("AreaId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int?>("AreaId")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
@@ -323,8 +339,8 @@ namespace DAL.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
-                    b.Property<Guid>("SellerId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<int>("SellerId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -372,9 +388,11 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.Seller", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()

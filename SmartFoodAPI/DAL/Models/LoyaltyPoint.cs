@@ -8,7 +8,7 @@ namespace DAL.Models
 {
     public class LoyaltyPoint
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public int UserAccountId { get; set; } // FK to Account
         public int Points { get; set; }
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
