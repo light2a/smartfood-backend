@@ -115,6 +115,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddCors(option =>
+{
+    option.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+    }
+
+
+    );
+}
+
+
+);
+
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     serverOptions.ConfigureHttpsDefaults(co =>
@@ -122,6 +138,7 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
         co.AllowAnyClientCertificate();
     });
 });
+
 
 builder.Services.AddAuthorization();
 // Add services to the container.
