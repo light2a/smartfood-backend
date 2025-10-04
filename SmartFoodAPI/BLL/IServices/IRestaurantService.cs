@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BLL.DTOs.Restaurant;
+using Microsoft.AspNetCore.Http;
 
 namespace BLL.IServices
 {
@@ -11,8 +12,8 @@ namespace BLL.IServices
     {
         Task<IEnumerable<RestaurantDto>> GetAllAsync();
         Task<RestaurantDto?> GetByIdAsync(int id);
-        Task<RestaurantDto> CreateAsync(CreateRestaurantRequest request);
-        Task UpdateAsync(int id,UpdateRestaurantRequest request);
+        Task<RestaurantDto> CreateAsync(CreateRestaurantRequest request, IFormFile? logo);
+        Task UpdateAsync(int id,UpdateRestaurantRequest request, IFormFile? logo);
         Task DeleteAsync(int id);
         Task<IEnumerable<RestaurantDto>> SearchAsync(string? keyword);
         Task ToggleActiveAsync(int id, bool isActive);
