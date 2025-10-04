@@ -26,7 +26,7 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpPost]
-    //[Authorize(Roles = "Admin,Seller")]
+    [Authorize(Roles = "Admin,Seller")]
     public async Task<IActionResult> Create([FromForm] CreateMenuItemRequest request, IFormFile? logo)
     {
         var created = await _service.CreateAsync(request, logo);
@@ -34,7 +34,7 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
-    //[Authorize(Roles = "Admin,Seller")]
+    [Authorize(Roles = "Admin,Seller")]
     public async Task<IActionResult> Update(int id, [FromForm] UpdateMenuItemRequest request, IFormFile? logo)
     {
         await _service.UpdateAsync(id, request, logo);
@@ -42,7 +42,7 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
-    //[Authorize(Roles = "Admin,Seller")]
+    [Authorize(Roles = "Admin,Seller")]
     public async Task<IActionResult> Delete(int id)
     {
         await _service.DeleteAsync(id);
@@ -56,7 +56,7 @@ public class MenuItemsController : ControllerBase
         return Ok(result);
     }
     [HttpPatch("{id:int}/availability")]
-    //[Authorize(Roles = "Admin,Seller")]
+    [Authorize(Roles = "Admin,Seller")]
     public async Task<IActionResult> ToggleAvailability(int id, [FromQuery] bool isAvailable)
     {
         await _service.ToggleAvailabilityAsync(id, isAvailable);
