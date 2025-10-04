@@ -113,6 +113,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ConfigureHttpsDefaults(co =>
+    {
+        co.AllowAnyClientCertificate();
+    });
+});
+
 builder.Services.AddAuthorization();
 // Add services to the container.
 
