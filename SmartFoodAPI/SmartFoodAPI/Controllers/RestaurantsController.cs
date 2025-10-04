@@ -37,17 +37,17 @@ namespace SmartFoodAPI.Controllers
         // Tạo mới (nên yêu cầu authorize cho seller/admin tuỳ quy định)
         [HttpPost]
         [Authorize(Roles = "Admin,Seller")]
-        public async Task<IActionResult> Create([FromBody] CreateRestaurantRequest request)
+        public async Task<IActionResult> Create([FromForm] CreateRestaurantRequest request, IFormFile? logo)
         {
-            var created = await _service.CreateAsync(request);
+            var created = await _service.CreateAsync(request, logo);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         [HttpPut("{id:int}")]
         [Authorize(Roles = "Admin,Seller")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateRestaurantRequest request)
+        public async Task<IActionResult> Update(int id, [FromForm] UpdateRestaurantRequest request, IFormFile? logo)
         {
-            await _service.UpdateAsync(id, request);
+            await _service.UpdateAsync(id, request, logo);
             return NoContent();
         }
 
