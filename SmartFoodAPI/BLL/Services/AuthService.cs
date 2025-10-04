@@ -102,7 +102,7 @@ namespace BLL.Services
             var seller = new Seller
             {
                 UserAccountId = createdAccount.AccountId,
-                DisplayName = displayName,
+                DisplayName = account.FullName,
                 Description = null // to be filled later via UpdateSeller API
             };
 
