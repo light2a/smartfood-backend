@@ -8,7 +8,7 @@ namespace DAL.Models
 {
     public class Seller
     {
-        public Guid Id { get; set; }
+        public int Id { get; set; }
         public int UserAccountId { get; set; } // FK to Account
         public string DisplayName { get; set; } = null!;
         public string? Description { get; set; }

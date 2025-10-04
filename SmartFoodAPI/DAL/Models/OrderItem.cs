@@ -8,9 +8,9 @@ namespace DAL.Models
 {
     public class OrderItem
     {
-        public Guid Id { get; set; }
-        public Guid OrderId { get; set; }
-        public Guid MenuItemId { get; set; }
+        public int Id { get; set; }
+        public int OrderId { get; set; }
+        public int MenuItemId { get; set; }
         public int Qty { get; set; } = 1;
         public decimal UnitPrice { get; set; }
 
