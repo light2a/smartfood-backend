@@ -11,6 +11,6 @@ namespace BLL.IServices
     {
         Task<string?> LoginAsync(string email, string password);
         Task<Account> RegisterAsync(string fullName, string email, string password, string phonenumber);
-        Task<Account> RegisterSellerAsync(string fullName, string email, string password, string phonenumber, string displayName);
+        Task<Account> RegisterSellerAsync(string fullName, string email, string password, string phonenumber);
     }
 }

@@ -78,7 +78,7 @@ namespace BLL.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<Account> RegisterSellerAsync(string fullName, string email, string password, string phonenumber, string displayName)
+        public async Task<Account> RegisterSellerAsync(string fullName, string email, string password, string phonenumber)
         {
             var existing = await _accountRepository.GetByEmailAsync(email);
             if (existing != null)
