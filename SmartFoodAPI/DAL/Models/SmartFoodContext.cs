@@ -109,7 +109,7 @@ namespace DAL.Models
                 entity.Property(e => e.Description).HasMaxLength(1000);
                 entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
                 entity.Property(e => e.IsAvailable).HasDefaultValue(true);
-
+                entity.Property(e => e.LogoUrl).HasMaxLength(500);
                 entity.HasOne(m => m.Restaurant)
                     .WithMany(r => r.MenuItems)
                     .HasForeignKey(m => m.RestaurantId);
