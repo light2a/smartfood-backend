@@ -8,6 +8,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using BCrypt.Net;
 
 namespace BLL.Services
 {
@@ -25,9 +26,34 @@ namespace BLL.Services
         public async Task<string?> LoginAsync(string email, string password)
         {
             var account = await _accountRepository.GetByEmailAsync(email);
-            if (account == null || account.Password != password || account.IsActive == false)
+            if (account == null || !BCrypt.Net.BCrypt.Verify(password, account.Password) || account.IsActive == false)
                 return null;
 
+            return GenerateJwtToken(account);
+        }
+
+        public async Task<Account> RegisterAsync(string fullName, string email, string password)
+        {
+            var existing = await _accountRepository.GetByEmailAsync(email);
+            if (existing != null)
+                throw new Exception("Email already registered.");
+
+            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+
+            var account = new Account
+            {
+                FullName = fullName,
+                Email = email,
+                Password = hashedPassword,
+                IsActive = true,
+                RoleId = 1 // Default = Customer
+            };
+
+            return await _accountRepository.AddAsync(account);
+        }
+
+        private string GenerateJwtToken(Account account)
+        {
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, account.AccountId.ToString()),
@@ -47,24 +73,6 @@ namespace BLL.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public async Task<Account> RegisterAsync(string fullName, string email, string password)
-        {
-            var existing = await _accountRepository.GetByEmailAsync(email);
-            if (existing != null)
-                throw new Exception("Email already registered.");
-
-            var account = new Account
-            {
-                FullName = fullName,
-                Email = email,
-                Password = password, // ❗In real apps, hash passwords
-                IsActive = true,
-                RoleId = 1 // Default = Customer
-            };
-
-            return await _accountRepository.AddAsync(account);
         }
     }
 }

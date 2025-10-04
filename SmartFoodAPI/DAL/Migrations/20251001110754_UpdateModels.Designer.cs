@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(SmartFoodContext))]
-    [Migration("20250930112958_UpdateModels")]
+    [Migration("20251001110754_UpdateModels")]
     partial class UpdateModels
     {
         /// <inheritdoc />
