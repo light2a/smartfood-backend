@@ -17,5 +17,7 @@ namespace BLL.IServices
         Task DeleteAsync(int id);
         Task<IEnumerable<RestaurantDto>> SearchAsync(string? keyword);
         Task ToggleActiveAsync(int id, bool isActive);
+        Task<IEnumerable<RestaurantDto>> SearchByMenuItemNameAsync(string keyword);
+
     }
 }

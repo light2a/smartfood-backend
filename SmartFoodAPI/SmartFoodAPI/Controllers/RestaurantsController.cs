@@ -9,7 +9,6 @@ namespace SmartFoodAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
     public class RestaurantsController : ControllerBase
     {
         private readonly IRestaurantService _service;
@@ -34,7 +33,6 @@ namespace SmartFoodAPI.Controllers
             return Ok(r);
         }
 
-        // Tạo mới (nên yêu cầu authorize cho seller/admin tuỳ quy định)
         [HttpPost]
         [Authorize(Roles = "Admin,Seller")]
         public async Task<IActionResult> Create([FromForm] CreateRestaurantRequest request, IFormFile? logo)
@@ -61,6 +59,7 @@ namespace SmartFoodAPI.Controllers
         }
         // Search by name or address
         [HttpGet("search")]
+        [AllowAnonymous]
         public async Task<IActionResult> Search([FromQuery] string? keyword)
         {
             var list = await _service.SearchAsync(keyword);
@@ -74,6 +73,12 @@ namespace SmartFoodAPI.Controllers
         {
             await _service.ToggleActiveAsync(id, isActive);
             return NoContent();
+        }
+        [HttpGet("search-by-menu")]
+        public async Task<IActionResult> SearchByMenuItem([FromQuery] string keyword)
+        {
+            var result = await _service.SearchByMenuItemNameAsync(keyword);
+            return Ok(result);
         }
     }
 }

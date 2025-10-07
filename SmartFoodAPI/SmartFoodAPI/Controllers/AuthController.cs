@@ -92,8 +92,7 @@ namespace SmartFoodAPI.Controllers
                 if (string.IsNullOrWhiteSpace(request.FullName) ||
                     string.IsNullOrWhiteSpace(request.Email) ||
                     string.IsNullOrWhiteSpace(request.Password) ||
-                    string.IsNullOrWhiteSpace(request.ConfirmPassword) ||
-                    string.IsNullOrWhiteSpace(request.DisplayName))
+                    string.IsNullOrWhiteSpace(request.ConfirmPassword)) 
                 {
                     return BadRequest(new { error = "All fields are required." });
                 }
@@ -124,8 +123,7 @@ namespace SmartFoodAPI.Controllers
                     request.FullName,
                     request.Email,
                     request.Password,
-                    request.PhoneNumber,
-                    request.DisplayName
+                    request.PhoneNumber
                 );
 
                 return Ok(new RegisterResponse

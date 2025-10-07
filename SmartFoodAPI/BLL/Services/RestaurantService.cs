@@ -34,52 +34,65 @@ namespace BLL.Services
             return r == null ? null : ToDto(r);
         }
 
-        public async Task<RestaurantDto> CreateAsync(CreateRestaurantRequest request, IFormFile? logo)
+        public async Task<RestaurantDto> CreateAsync(CreateRestaurantRequest request, IFormFile? logo = null)
         {
             string? logoUrl = null;
-            if (logo != null && logo.Length > 0)
-            {
+            if (logo != null)
                 logoUrl = await _imageService.UploadAsync(logo);
-            }
+
             var restaurant = new Restaurant
             {
                 SellerId = request.SellerId,
                 AreaId = request.AreaId,
+                CategoryId = request.CategoryId,
                 Name = request.Name,
                 Address = request.Address,
-                LogoUrl = logoUrl,
-                IsActive = true
+                Coordinate = request.Coordinate,
+                OpenTime = request.OpenTime,
+                CloseTime = request.CloseTime,
+                Hotline = request.Hotline,
+                LogoUrl = logoUrl
             };
 
             var created = await _repo.AddAsync(restaurant);
             return new RestaurantDto
             {
                 Id = created.Id,
+                SellerId = created.SellerId,
+                AreaId = created.AreaId,
+                CategoryId = created.CategoryId,
                 Name = created.Name,
                 Address = created.Address,
-                LogoUrl = created.LogoUrl,
-                IsActive = created.IsActive
+                Coordinate = created.Coordinate,
+                OpenTime = created.OpenTime,
+                CloseTime = created.CloseTime,
+                Hotline = created.Hotline,
+                IsActive = created.IsActive,
+                LogoUrl = created.LogoUrl
             };
         }
 
-        public async Task UpdateAsync(int id, UpdateRestaurantRequest request, IFormFile? logo)
+        public async Task UpdateAsync(int id, UpdateRestaurantRequest request, IFormFile? logo = null)
         {
             var existing = await _repo.GetByIdAsync(id);
-            if (existing == null) throw new KeyNotFoundException("Restaurant not found");
+            if (existing == null)
+                throw new KeyNotFoundException("Restaurant not found");
 
+            existing.SellerId = request.SellerId;
             existing.Name = request.Name;
             existing.Address = request.Address;
-            existing.IsActive = request.IsActive;
             existing.AreaId = request.AreaId;
-            existing.SellerId = request.SellerId;
+            existing.Coordinate = request.Coordinate;
+            existing.OpenTime = request.OpenTime;
+            existing.CloseTime = request.CloseTime;
+            existing.Hotline = request.Hotline;
+            existing.IsActive = request.IsActive;
+
             if (logo != null)
-            {
-                var logoUrl = await _imageService.UploadAsync(logo);
-                existing.LogoUrl = logoUrl;
-            }
+                existing.LogoUrl = await _imageService.UploadAsync(logo);
+
             await _repo.UpdateAsync(existing);
         }
-
 
         public async Task DeleteAsync(int id)
         {
@@ -104,6 +117,19 @@ namespace BLL.Services
         public async Task ToggleActiveAsync(int id, bool isActive)
         {
             await _repo.ToggleActiveAsync(id, isActive);
+        }
+        public async Task<IEnumerable<RestaurantDto>> SearchByMenuItemNameAsync(string keyword)
+        {
+            var restaurants = await _repo.SearchByMenuItemNameAsync(keyword);
+
+            return restaurants.Select(r => new RestaurantDto
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Address = r.Address,
+                IsActive = r.IsActive,
+                LogoUrl = r.LogoUrl
+            });
         }
     }
 }
