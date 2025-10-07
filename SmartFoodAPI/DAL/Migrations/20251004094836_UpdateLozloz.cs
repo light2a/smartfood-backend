@@ -10,9 +10,9 @@ namespace DAL.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Rating",
-                table: "Restaurants");
+            //migrationBuilder.DropColumn(
+            //    name: "Rating",
+            //    table: "Restaurants");
 
             migrationBuilder.AlterColumn<string>(
                 name: "LogoUrl",
