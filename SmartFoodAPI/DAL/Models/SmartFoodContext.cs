@@ -18,6 +18,8 @@ namespace DAL.Models
         public virtual DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
         public virtual DbSet<LoyaltyPoint> LoyaltyPoints { get; set; }
         public virtual DbSet<Feedback> Feedbacks { get; set; }
+        public virtual DbSet<Category> Categories { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -98,6 +100,11 @@ namespace DAL.Models
                 entity.HasOne(r => r.Area)
                     .WithMany(a => a.Restaurants)
                     .HasForeignKey(r => r.AreaId);
+
+                entity.HasOne(r => r.Category)
+                    .WithMany(c => c.Restaurants)
+                    .HasForeignKey(r => r.CategoryId)
+                    .OnDelete(DeleteBehavior.SetNull);
             });
 
             // === MenuItem ===
@@ -205,6 +212,23 @@ namespace DAL.Models
                     .WithMany(m => m.Feedbacks)
                     .HasForeignKey(f => f.MenuItemId);
             });
+
+            // === Category ===
+            modelBuilder.Entity<Category>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
+                entity.Property(e => e.Description).HasMaxLength(500);
+                entity.HasData(
+                                new Category { Id = 6, Name = "Món Việt", Description = "Nhà hàng chuyên phục vụ món ăn Việt Nam truyền thống" },
+                                new Category { Id = 7, Name = "Món Hàn", Description = "Ẩm thực Hàn Quốc: BBQ, kimchi, tokbokki..." },
+                                new Category { Id = 8, Name = "Món Nhật", Description = "Sushi, sashimi và các món ăn Nhật Bản hiện đại" },
+                                new Category { Id = 9, Name = "Món Âu", Description = "Các món ăn phong cách phương Tây" },
+                                new Category { Id = 10, Name = "Cà phê & Trà sữa", Description = "Quán cà phê, trà sữa, thức uống nhẹ" }
+                                );
+            });
+
 
             OnModelCreatingPartial(modelBuilder);
         }

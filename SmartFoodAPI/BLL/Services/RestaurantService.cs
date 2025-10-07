@@ -44,6 +44,7 @@ namespace BLL.Services
             {
                 SellerId = request.SellerId,
                 AreaId = request.AreaId,
+                CategoryId = request.CategoryId,
                 Name = request.Name,
                 Address = request.Address,
                 Coordinate = request.Coordinate,
@@ -59,6 +60,7 @@ namespace BLL.Services
                 Id = created.Id,
                 SellerId = created.SellerId,
                 AreaId = created.AreaId,
+                CategoryId = created.CategoryId,
                 Name = created.Name,
                 Address = created.Address,
                 Coordinate = created.Coordinate,
@@ -91,8 +93,6 @@ namespace BLL.Services
 
             await _repo.UpdateAsync(existing);
         }
-
-
 
         public async Task DeleteAsync(int id)
         {

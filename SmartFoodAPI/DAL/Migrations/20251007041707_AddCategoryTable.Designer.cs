@@ -4,6 +4,7 @@ using DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(SmartFoodContext))]
-    partial class SmartFoodContextModelSnapshot : ModelSnapshot
+    [Migration("20251007041707_AddCategoryTable")]
+    partial class AddCategoryTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -129,38 +132,6 @@ namespace DAL.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Categories");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 6,
-                            Description = "Nhà hàng chuyên phục vụ món ăn Việt Nam truyền thống",
-                            Name = "Món Việt"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Description = "Ẩm thực Hàn Quốc: BBQ, kimchi, tokbokki...",
-                            Name = "Món Hàn"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Description = "Sushi, sashimi và các món ăn Nhật Bản hiện đại",
-                            Name = "Món Nhật"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Description = "Các món ăn phong cách phương Tây",
-                            Name = "Món Âu"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Description = "Quán cà phê, trà sữa, thức uống nhẹ",
-                            Name = "Cà phê & Trà sữa"
-                        });
                 });
 
             modelBuilder.Entity("DAL.Models.Feedback", b =>

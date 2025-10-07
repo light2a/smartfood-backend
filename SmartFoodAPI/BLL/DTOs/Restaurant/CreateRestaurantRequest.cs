@@ -8,6 +8,8 @@ namespace BLL.DTOs.Restaurant
         [Required]
         public int SellerId { get; set; }
         public int? AreaId { get; set; }
+        [Required]
+        public int CategoryId { get; set; }
         [Required, MaxLength(250)]
         public string Name { get; set; } = null!;
         [MaxLength(500)]
