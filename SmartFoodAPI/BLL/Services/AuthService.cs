@@ -15,13 +15,13 @@ namespace BLL.Services
     public class AuthService : IAuthService
     {
         private readonly IAccountRepository _accountRepository;
-        private readonly IConfiguration _configuration;
         private readonly ISellerRepository _sellerRepository;
+        private readonly IConfiguration _configuration;
 
         public AuthService(IAccountRepository accountRepository, ISellerRepository sellerRepository, IConfiguration configuration)
         {
             _accountRepository = accountRepository;
-            _sellerRepository = sellerRepository; // assign it
+            _sellerRepository = sellerRepository;
             _configuration = configuration;
         }
 
@@ -31,7 +31,8 @@ namespace BLL.Services
             if (account == null || !BCrypt.Net.BCrypt.Verify(password, account.Password) || account.IsActive == false)
                 return null;
 
-            return GenerateJwtToken(account);
+            // Now generate JWT with SellerId if applicable
+            return await GenerateJwtTokenAsync(account);
         }
 
         public async Task<Account> RegisterAsync(string fullName, string email, string password, string phonenumber)
@@ -55,29 +56,6 @@ namespace BLL.Services
             return await _accountRepository.AddAsync(account);
         }
 
-        private string GenerateJwtToken(Account account)
-        {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, account.AccountId.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, account.Email),
-                new Claim(ClaimTypes.Role, account.Role?.RoleName ?? "Customer")
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
-                signingCredentials: creds
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
         public async Task<Account> RegisterSellerAsync(string fullName, string email, string password, string phonenumber)
         {
             var existing = await _accountRepository.GetByEmailAsync(email);
@@ -98,19 +76,57 @@ namespace BLL.Services
 
             var createdAccount = await _accountRepository.AddAsync(account);
 
-            // Create seller entry with minimal info
+            // Create corresponding seller entry
             var seller = new Seller
             {
                 UserAccountId = createdAccount.AccountId,
-                DisplayName = account.FullName,
-                Description = null // to be filled later via UpdateSeller API
+                DisplayName = createdAccount.FullName,
+                Description = null
             };
 
-            // Save seller in database (assuming you have ISellerRepository)
             await _sellerRepository.AddAsync(seller);
 
             return createdAccount;
         }
 
+        /// <summary>
+        /// Generates JWT token, including SellerId if user is a seller.
+        /// </summary>
+        private async Task<string> GenerateJwtTokenAsync(Account account)
+        {
+            int? sellerId = null;
+
+            // Only lookup seller if role is "Seller"
+            if (account.Role?.RoleName?.Equals("Seller", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                var seller = await _sellerRepository.GetByUserAccountIdAsync(account.AccountId);
+                sellerId = seller?.Id;
+            }
+
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, account.AccountId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, account.Email),
+                new Claim(ClaimTypes.Role, account.Role?.RoleName ?? "Customer")
+            };
+
+            if (sellerId.HasValue)
+            {
+                claims.Add(new Claim("SellerId", sellerId.Value.ToString()));
+            }
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(2),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
     }
 }
