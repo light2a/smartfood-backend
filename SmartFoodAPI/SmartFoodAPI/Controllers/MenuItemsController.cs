@@ -2,6 +2,7 @@
 using BLL.DTOs.MenuItem;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using DAL.Models;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -55,12 +56,11 @@ public class MenuItemsController : ControllerBase
         var result = await _service.SearchAsync(keyword);
         return Ok(result);
     }
-    [HttpPatch("{id:int}/availability")]
+    [HttpPatch("{id:int}/status")]
     [Authorize(Roles = "Admin,Seller")]
-    public async Task<IActionResult> ToggleAvailability(int id, [FromQuery] bool isAvailable)
+    public async Task<IActionResult> ChangeStatus(int id, [FromQuery] MenuItemStatus status)
     {
-        await _service.ToggleAvailabilityAsync(id, isAvailable);
+        await _service.ToggleStatusAsync(id, status);
         return NoContent();
     }
-
 }

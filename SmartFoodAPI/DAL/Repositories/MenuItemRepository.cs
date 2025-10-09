@@ -55,14 +55,14 @@ namespace DAL.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
-        public async Task ToggleAvailabilityAsync(int id, bool isAvailable)
+        public async Task ToggleStatusAsync(int id, MenuItemStatus status)
         {
             var existing = await _context.MenuItems.FindAsync(id);
-            if (existing == null) throw new KeyNotFoundException("Menu item not found");
+            if (existing == null)
+                throw new KeyNotFoundException("Menu item not found");
 
-            existing.IsAvailable = isAvailable;
+            existing.Status = status;
             await _context.SaveChangesAsync();
         }
-
     }
 }

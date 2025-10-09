@@ -101,10 +101,26 @@ namespace DAL.Models
                     .WithMany(a => a.Restaurants)
                     .HasForeignKey(r => r.AreaId);
 
-                entity.HasOne(r => r.Category)
+                entity.HasMany(r => r.Categories)
                     .WithMany(c => c.Restaurants)
-                    .HasForeignKey(r => r.CategoryId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                    .UsingEntity<Dictionary<string, object>>(
+                        "RestaurantCategory",
+                        j => j
+                            .HasOne<Category>()
+                            .WithMany()
+                            .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade),
+                        j => j
+                            .HasOne<Restaurant>()
+                            .WithMany()
+                            .HasForeignKey("RestaurantId")
+                            .OnDelete(DeleteBehavior.Cascade),
+                        j =>
+                        {
+                            j.HasKey("RestaurantId", "CategoryId");
+                            j.ToTable("RestaurantCategory");
+                        }
+                    );
             });
 
             // === MenuItem ===
@@ -115,7 +131,9 @@ namespace DAL.Models
                 entity.Property(e => e.Name).HasMaxLength(250).IsRequired();
                 entity.Property(e => e.Description).HasMaxLength(1000);
                 entity.Property(e => e.Price).HasColumnType("decimal(18,2)");
-                entity.Property(e => e.IsAvailable).HasDefaultValue(true);
+                entity.Property(e => e.Status)
+                    .HasConversion<int>()
+                    .HasDefaultValue(MenuItemStatus.DangBan);
                 entity.Property(e => e.LogoUrl).HasMaxLength(500);
                 entity.HasOne(m => m.Restaurant)
                     .WithMany(r => r.MenuItems)
@@ -221,12 +239,12 @@ namespace DAL.Models
                 entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
                 entity.Property(e => e.Description).HasMaxLength(500);
                 entity.HasData(
-                                new Category { Id = 6, Name = "Món Việt", Description = "Nhà hàng chuyên phục vụ món ăn Việt Nam truyền thống" },
-                                new Category { Id = 7, Name = "Món Hàn", Description = "Ẩm thực Hàn Quốc: BBQ, kimchi, tokbokki..." },
-                                new Category { Id = 8, Name = "Món Nhật", Description = "Sushi, sashimi và các món ăn Nhật Bản hiện đại" },
-                                new Category { Id = 9, Name = "Món Âu", Description = "Các món ăn phong cách phương Tây" },
-                                new Category { Id = 10, Name = "Cà phê & Trà sữa", Description = "Quán cà phê, trà sữa, thức uống nhẹ" }
-                                );
+                    new Category { Id = 6, Name = "Món Việt", Description = "Nhà hàng chuyên phục vụ món ăn Việt Nam truyền thống" },
+                    new Category { Id = 7, Name = "Món Hàn", Description = "Ẩm thực Hàn Quốc: BBQ, kimchi, tokbokki..." },
+                    new Category { Id = 8, Name = "Món Nhật", Description = "Sushi, sashimi và các món ăn Nhật Bản hiện đại" },
+                    new Category { Id = 9, Name = "Món Âu", Description = "Các món ăn phong cách phương Tây" },
+                    new Category { Id = 10, Name = "Cà phê & Trà sữa", Description = "Quán cà phê, trà sữa, thức uống nhẹ" }
+                );
             });
 
 

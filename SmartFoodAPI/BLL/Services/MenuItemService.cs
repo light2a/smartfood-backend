@@ -31,7 +31,7 @@ namespace BLL.Services
                 Name = m.Name,
                 Description = m.Description,
                 Price = m.Price,
-                IsAvailable = m.IsAvailable,
+                Status = m.Status,
                 LogoUrl = m.LogoUrl
             });
         }
@@ -45,7 +45,7 @@ namespace BLL.Services
                 Name = item.Name,
                 Description = item.Description,
                 Price = item.Price,
-                IsAvailable = item.IsAvailable,
+                Status = item.Status,
                 LogoUrl = item.LogoUrl
             };
         }
@@ -62,7 +62,7 @@ namespace BLL.Services
                 Name = request.Name,
                 Description = request.Description,
                 Price = request.Price,
-                IsAvailable = request.IsAvailable,
+                Status = request.Status,
                 LogoUrl = logoUrl
             };
 
@@ -74,7 +74,7 @@ namespace BLL.Services
                 Name = created.Name,
                 Description = created.Description,
                 Price = created.Price,
-                IsAvailable = created.IsAvailable,
+                Status = created.Status,
                 LogoUrl = created.LogoUrl
             };
         }
@@ -88,7 +88,7 @@ namespace BLL.Services
             existing.Name = request.Name;
             existing.Description = request.Description;
             existing.Price = request.Price;
-            existing.IsAvailable = request.IsAvailable;
+            existing.Status = request.Status;
             existing.RestaurantId = request.RestaurantId;
 
             if (logo != null)
@@ -111,18 +111,19 @@ namespace BLL.Services
                 Name = m.Name,
                 Description = m.Description,
                 Price = m.Price,
-                IsAvailable = m.IsAvailable,
+                Status = m.Status,
                 LogoUrl = m.LogoUrl
             });
         }
-        public async Task ToggleAvailabilityAsync(int id, bool isAvailable)
+        public async Task ToggleStatusAsync(int id, MenuItemStatus status)
         {
             var existing = await _repo.GetByIdAsync(id);
             if (existing == null)
                 throw new KeyNotFoundException("Menu item not found");
 
-            existing.IsAvailable = isAvailable;
+            existing.Status = status;
             await _repo.UpdateAsync(existing);
         }
+
     }
 }
