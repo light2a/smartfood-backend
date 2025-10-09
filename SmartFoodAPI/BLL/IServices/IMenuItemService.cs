@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using BLL.DTOs.MenuItem;
+using DAL.Models;
 using Microsoft.AspNetCore.Http;
 
 namespace BLL.IServices
@@ -16,6 +17,6 @@ namespace BLL.IServices
         Task UpdateAsync(int id, UpdateMenuItemRequest request, IFormFile? logo);
         Task DeleteAsync(int id);
         Task<IEnumerable<MenuItemDto>> SearchAsync(string keyword);
-        Task ToggleAvailabilityAsync(int id, bool isAvailable);
+        Task ToggleStatusAsync(int id, MenuItemStatus status);
     }
 }
