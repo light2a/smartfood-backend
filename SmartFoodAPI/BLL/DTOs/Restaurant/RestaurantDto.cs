@@ -15,5 +15,7 @@ namespace BLL.DTOs.Restaurant
         public string? Hotline { get; set; }
         public bool IsActive { get; set; }
         public string? LogoUrl { get; set; }
+        public List<string>? Categories { get; set; }
+
     }
 }

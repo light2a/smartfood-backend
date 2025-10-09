@@ -15,11 +15,13 @@ namespace BLL.Services
     {
         private readonly IRestaurantRepository _repo;
         private readonly IImageService _imageService;
+        private readonly ICategoryRepository _categoryRepo;
 
-        public RestaurantService(IRestaurantRepository repo, IImageService imageService)
+        public RestaurantService(IRestaurantRepository repo, IImageService imageService, ICategoryRepository categoryRepo)
         {
             _repo = repo;
             _imageService = imageService;
+            _categoryRepo = categoryRepo;
         }
 
         public async Task<IEnumerable<RestaurantDto>> GetAllAsync()
@@ -40,11 +42,12 @@ namespace BLL.Services
             if (logo != null)
                 logoUrl = await _imageService.UploadAsync(logo);
 
+            var categories = await GetCategoriesByIdsAsync(request.CategoryIds);
+
             var restaurant = new Restaurant
             {
                 SellerId = request.SellerId,
                 AreaId = request.AreaId,
-                CategoryId = request.CategoryId,
                 Name = request.Name,
                 Address = request.Address,
                 Coordinate = request.Coordinate,
@@ -60,7 +63,6 @@ namespace BLL.Services
                 Id = created.Id,
                 SellerId = created.SellerId,
                 AreaId = created.AreaId,
-                CategoryId = created.CategoryId,
                 Name = created.Name,
                 Address = created.Address,
                 Coordinate = created.Coordinate,
@@ -92,6 +94,12 @@ namespace BLL.Services
                 existing.LogoUrl = await _imageService.UploadAsync(logo);
 
             await _repo.UpdateAsync(existing);
+        }
+        private async Task<IEnumerable<Category>> GetCategoriesByIdsAsync(List<int> categoryIds)
+        {
+            if (categoryIds == null || !categoryIds.Any()) return new List<Category>();
+            var all = await _categoryRepo.GetAllAsync();
+            return all.Where(c => categoryIds.Contains(c.Id));
         }
 
         public async Task DeleteAsync(int id)

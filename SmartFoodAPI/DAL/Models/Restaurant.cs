@@ -11,7 +11,6 @@ namespace DAL.Models
         public int Id { get; set; }
         public int SellerId { get; set; }
         public int? AreaId { get; set; }
-        public int? CategoryId { get; set; }
         public string Name { get; set; } = null!;
         public string? Address { get; set; }
         public string? Coordinate { get; set; }
@@ -22,9 +21,10 @@ namespace DAL.Models
         public string? LogoUrl { get; set; }
         public virtual Seller Seller { get; set; }
         public virtual Area? Area { get; set; }
-        public virtual Category? Category { get; set; }
         public virtual ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
         public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
+        public virtual ICollection<Category> Categories { get; set; } = new List<Category>();
+
     }
 }
