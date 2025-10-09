@@ -47,5 +47,10 @@ namespace DAL.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+        public async Task<Seller?> GetByUserAccountIdAsync(int accountId)
+        {
+            return await _context.Sellers
+                .FirstOrDefaultAsync(s => s.UserAccountId == accountId);
+        }
     }
 }
