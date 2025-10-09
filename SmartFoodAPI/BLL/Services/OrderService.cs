@@ -32,7 +32,7 @@ namespace BLL.Services
             foreach (var item in request.Items)
             {
                 var menuItem = await _menuItemRepository.GetByIdAsync(item.MenuItemId);
-                if (menuItem == null || !menuItem.IsAvailable)
+                if (menuItem == null)
                     throw new Exception($"Menu item ID {item.MenuItemId} is not available.");
 
                 if (restaurantId == 0)
