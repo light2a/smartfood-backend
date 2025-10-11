@@ -15,6 +15,7 @@ namespace DAL.Models
         public decimal ShippingFee { get; set; }
         public decimal CommissionPercent { get; set; }
         public decimal FinalAmount { get; set; }
+        public string OrderType { get; set; } 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual Account Customer { get; set; }

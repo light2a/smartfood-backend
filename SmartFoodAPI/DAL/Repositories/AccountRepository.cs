@@ -31,5 +31,11 @@ namespace DAL.Repositories
             await _context.SaveChangesAsync();
             return account;
         }
+        public async Task<Account> UpdateAsync(Account account)
+        {
+            _context.Accounts.Update(account);
+            await _context.SaveChangesAsync();
+            return account;
+        }
     }
 }

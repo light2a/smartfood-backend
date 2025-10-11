@@ -20,5 +20,9 @@ namespace BLL.DTOs.Order
     {
         [Required]
         public List<CreateOrderItemRequest> Items { get; set; } = new();
+
+        [Required]
+        [RegularExpression("^(Pickup|Delivery)$", ErrorMessage = "OrderType must be either 'Pickup' or 'Delivery'.")]
+        public string OrderType { get; set; } = "Pickup"; // default = pickup
     }
 }

@@ -12,5 +12,7 @@ namespace BLL.IServices
         Task<string?> LoginAsync(string email, string password);
         Task<Account> RegisterAsync(string fullName, string email, string password, string phonenumber);
         Task<Account> RegisterSellerAsync(string fullName, string email, string password, string phonenumber);
+        Task<Account> HandleExternalLoginAsync(string email, string fullName, string externalProvider, string externalProviderKey);
+        Task<string> GenerateJwtTokenAsync(Account account);
     }
 }

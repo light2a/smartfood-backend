@@ -11,5 +11,6 @@ namespace DAL.IRepositories
     {
         Task<Account?> GetByEmailAsync(string email);
         Task<Account> AddAsync(Account account);
+        Task<Account> UpdateAsync(Account account);
     }
 }

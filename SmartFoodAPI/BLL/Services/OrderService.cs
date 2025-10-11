@@ -51,24 +51,33 @@ namespace BLL.Services
                 orderItems.Add(orderItem);
             }
 
-            // Create initial order with "Created" status
+            // Determine shipping fee
+            decimal shippingFee = 0;
+            if (request.OrderType.Equals("Delivery", StringComparison.OrdinalIgnoreCase))
+            {
+                // Future: replace with distance-based calculation
+                shippingFee = 15000m;
+            }
+
+            // Create order with order type and initial status
             var order = new Order
             {
                 CustomerAccountId = customerAccountId,
                 RestaurantId = restaurantId,
-                ShippingFee = 0,
-                CommissionPercent = 0,
                 TotalAmount = totalAmount,
-                FinalAmount = totalAmount,
+                ShippingFee = shippingFee,
+                CommissionPercent = 0,
+                FinalAmount = totalAmount + shippingFee,
+                OrderType = request.OrderType,
                 OrderItems = orderItems,
                 StatusHistory = new List<OrderStatusHistory>
-                {
-                    new OrderStatusHistory
-                    {
-                        Status = "Created",
-                        Note = "Order created successfully."
-                    }
-                }
+        {
+            new OrderStatusHistory
+            {
+                Status = "Created",
+                Note = "Order created successfully."
+            }
+        }
             };
 
             var createdOrder = await _orderRepository.AddAsync(order);
@@ -77,8 +86,8 @@ namespace BLL.Services
             {
                 OrderId = createdOrder.Id,
                 TotalAmount = totalAmount,
-                FinalAmount = totalAmount,
-                Message = "Order created with status: Created."
+                FinalAmount = order.FinalAmount,
+                Message = $"Order created with type '{order.OrderType}' and status 'Created'."
             };
         }
 

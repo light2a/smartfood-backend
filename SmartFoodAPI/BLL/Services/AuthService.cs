@@ -88,11 +88,55 @@ namespace BLL.Services
 
             return createdAccount;
         }
+        public async Task<Account> HandleExternalLoginAsync(string email, string fullName, string externalProvider, string externalProviderKey)
+        {
+            try
+            {
+                var existing = await _accountRepository.GetByEmailAsync(email);
+
+                if (existing != null)
+                {
+                    // Update existing account with Google info
+                    existing.FullName = fullName ?? existing.FullName;
+                    existing.ExternalProvider = externalProvider;
+                    existing.ExternalProviderKey = externalProviderKey;
+                    existing.UpdateAt = DateTime.UtcNow;
+
+                    var updated = await _accountRepository.UpdateAsync(existing);
+                    Console.WriteLine($"[GoogleOAuth] Updated existing user: {updated.Email} (ID: {updated.AccountId})");
+                    return updated;
+                }
+
+                // Create new account
+                var newAccount = new Account
+                {
+                    Email = email,
+                    FullName = fullName,
+                    Password = string.Empty, // Google login doesn't need a password
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdateAt = DateTime.UtcNow,
+                    RoleId = 1, // Default = Customer
+                    ExternalProvider = externalProvider,
+                    ExternalProviderKey = externalProviderKey
+                };
+
+                var created = await _accountRepository.AddAsync(newAccount);
+                Console.WriteLine($"[GoogleOAuth] Created new user: {created.Email} (ID: {created.AccountId})");
+
+                return created;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[GoogleOAuth] Error saving external user: {ex.Message}");
+                throw;
+            }
+        }
 
         /// <summary>
         /// Generates JWT token, including SellerId if user is a seller.
         /// </summary>
-        private async Task<string> GenerateJwtTokenAsync(Account account)
+        public async Task<string> GenerateJwtTokenAsync(Account account)
         {
             int? sellerId = null;
 
