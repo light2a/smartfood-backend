@@ -1,9 +1,6 @@
-﻿using System;
+﻿using DAL.Models;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BLL.DTOs.Order
 {
@@ -21,8 +18,8 @@ namespace BLL.DTOs.Order
         [Required]
         public List<CreateOrderItemRequest> Items { get; set; } = new();
 
+        // ✅ Enum automatically appears as dropdown in Swagger
         [Required]
-        [RegularExpression("^(Pickup|Delivery)$", ErrorMessage = "OrderType must be either 'Pickup' or 'Delivery'.")]
-        public string OrderType { get; set; } = "Pickup"; // default = pickup
+        public OrderType OrderType { get; set; } = OrderType.Pickup;
     }
 }

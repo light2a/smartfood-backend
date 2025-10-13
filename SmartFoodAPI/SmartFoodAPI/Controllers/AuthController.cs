@@ -8,6 +8,9 @@ using System;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using BLL.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
 
 namespace SmartFoodAPI.Controllers
 {
@@ -18,16 +21,18 @@ namespace SmartFoodAPI.Controllers
         private readonly IAuthService _authService;
         private readonly ILogger<AuthController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
-        public AuthController(IAuthService authService, ILogger<AuthController> logger, IConfiguration configuration)
+        public AuthController(IAuthService authService, ILogger<AuthController> logger, IConfiguration configuration, IEmailService emailService)
         {
             _authService = authService;
             _logger = logger;
             _configuration = configuration;
+            _emailService = emailService;
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] DTOs.Auth.LoginRequest request)
         {
             var token = await _authService.LoginAsync(request.Email, request.Password);
             if (token == null)
@@ -37,7 +42,7 @@ namespace SmartFoodAPI.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        public async Task<IActionResult> Register([FromBody] DTOs.Auth.RegisterRequest request)
         {
             try
             {
@@ -100,7 +105,7 @@ namespace SmartFoodAPI.Controllers
                 if (string.IsNullOrWhiteSpace(request.FullName) ||
                     string.IsNullOrWhiteSpace(request.Email) ||
                     string.IsNullOrWhiteSpace(request.Password) ||
-                    string.IsNullOrWhiteSpace(request.ConfirmPassword)) 
+                    string.IsNullOrWhiteSpace(request.ConfirmPassword))
                 {
                     return BadRequest(new { error = "All fields are required." });
                 }
@@ -126,7 +131,7 @@ namespace SmartFoodAPI.Controllers
                         return BadRequest(new { error = "Invalid phone number format." });
                 }
 
-                // 5. Call service to register seller
+                // 5. Register seller (inactive by default)
                 var account = await _authService.RegisterSellerAsync(
                     request.FullName,
                     request.Email,
@@ -134,10 +139,19 @@ namespace SmartFoodAPI.Controllers
                     request.PhoneNumber
                 );
 
-                return Ok(new RegisterResponse
+                // 6. Generate OTP (6-digit)
+                var otp = new Random().Next(100000, 999999).ToString();
+                var expiration = DateTime.UtcNow.AddMinutes(5);
+
+                await _authService.SaveOtpAsync(request.Email, otp, expiration);
+
+                // 7. Send OTP email
+                await _emailService.SendOtpEmailAsync(request.Email, otp);
+
+                return Ok(new
                 {
-                    Message = "Seller registration successful. Pending admin approval.",
-                    AccountId = account.AccountId
+                    message = "Seller registration successful. Please verify your email using the OTP sent to your inbox.",
+                    accountId = account.AccountId
                 });
             }
             catch (Exception ex)
@@ -145,6 +159,130 @@ namespace SmartFoodAPI.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+        [HttpPost("otp/register")]
+        public async Task<IActionResult> OtpRegister([FromBody] OtpRegistrationRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors)
+                                              .Select(e => e.ErrorMessage)
+                                              .ToList();
+                return BadRequest(new { errors });
+            }
+
+            if (request.Password != request.ConfirmPassword)
+                return BadRequest(new { error = "Password and Confirm Password do not match." });
+
+            Account account;
+            try
+            {
+                account = await _authService.RegisterAsync(
+                    request.FullName,
+                    request.Email,
+                    request.Password,
+                    request.PhoneNumber
+                );
+            }
+            catch (Exception ex)
+            {
+                return Conflict(new { error = ex.Message });
+            }
+
+            var otpCode = new Random().Next(100000, 999999).ToString();
+            var expiration = DateTime.UtcNow.AddMinutes(5);
+
+            bool otpSaved = await _authService.SaveOtpAsync(request.Email, otpCode, expiration);
+            if (!otpSaved)
+                return StatusCode(500, "Failed to generate OTP.");
+
+            try
+            {
+                await _emailService.SendOtpEmailAsync(request.Email, otpCode);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send OTP email to {Email}", request.Email);
+                return StatusCode(500, "Failed to send OTP email.");
+            }
+
+            return Ok(new
+            {
+                message = "Registration successful. An OTP has been sent to your email. Please verify to activate your account."
+            });
+        }
+        [HttpPost("otp/verify")]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors)
+                                              .Select(e => e.ErrorMessage)
+                                              .ToList();
+                return BadRequest(new { errors });
+            }
+            var account = await _authService.GetAccountByEmailAsync(request.Email);
+            if (account == null)
+                return NotFound("Account not found.");
+            if (account.IsActive == true)
+                return BadRequest("Account is already active.");
+
+            bool isValid = await _authService.VerifyOtpAsync(request.Email, request.OtpCode);
+            if (!isValid)
+                return BadRequest("Invalid or expired OTP.");
+            account.IsActive = true;
+            await _authService.UpdateAccountAsync(account);
+
+            _logger.LogInformation("OTP verification successful, account updated.");
+            await _authService.InvalidateOtpAsync(request.Email);
+
+            return Ok(new { message = "Account verified successfully." });
+        }
+
+        [HttpPost("otp/resend")]
+        public async Task<IActionResult> ResendOtp([FromBody] ResendOtpRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors)
+                                              .Select(e => e.ErrorMessage)
+                                              .ToList();
+                return BadRequest(new { errors });
+            }
+
+            var account = await _authService.GetAccountByEmailAsync(request.Email);
+            if (account == null)
+                return NotFound("Account not found.");
+
+            if (account.IsActive == true)
+                return Ok(new { message = "Account is already verified." });
+
+            var currentOtp = await _authService.GetCurrentOtpAsync(request.Email);
+            if (currentOtp != null && currentOtp.Expiration > DateTime.UtcNow)
+            {
+                return Ok(new { message = "Your OTP is still active. Please use the existing OTP." });
+            }
+
+            var otpCode = new Random().Next(100000, 999999).ToString();
+            var expiration = DateTime.UtcNow.AddMinutes(5);
+
+            bool otpSaved = await _authService.SaveOtpAsync(request.Email, otpCode, expiration);
+            if (!otpSaved)
+                return StatusCode(500, "Failed to generate OTP.");
+
+            try
+            {
+                await _emailService.SendOtpEmailAsync(request.Email, otpCode);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to resend OTP email to {Email}", request.Email);
+                return StatusCode(500, "Failed to resend OTP email.");
+            }
+
+            return Ok(new { message = "A new OTP has been sent to your email." });
+        }
+
         [HttpGet("google-login")]
         public IActionResult GoogleLogin(string returnUrl = "/")
         {
@@ -260,7 +398,92 @@ namespace SmartFoodAPI.Controllers
             }
         }
 
+        [Authorize]
+        [HttpPut("update-account")]
+        public async Task<IActionResult> UpdateAccount([FromBody] UpdateAccountRequest request)
+        {
+            try
+            {
+                // ✅ Get the current user's ID from JWT claims
+                var accountIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+                if (accountIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing account ID." });
 
+                int accountId = int.Parse(accountIdClaim);
+
+                // ✅ Update account using the ID from token
+                var account = await _authService.UpdateAccountAsync(accountId, request.FullName, request.PhoneNumber);
+
+                return Ok(new { message = "Account updated successfully", account });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+
+        [Authorize]
+        [HttpDelete("deactivate-account")]
+        public async Task<IActionResult> DeactivateAccount()
+        {
+            try
+            {
+                var accountIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+                if (accountIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing account ID." });
+
+                int accountId = int.Parse(accountIdClaim);
+
+                var account = await _authService.DeactivateAccountAsync(accountId);
+
+                return Ok(new { message = "Account deactivated successfully", account });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var account = await _authService.GetAccountByEmailAsync(request.Email);
+            if (account == null)
+            {
+                return Ok(new { message = "If an account with that email exists, you will receive a password reset email." });
+            }
+
+            var token = Guid.NewGuid().ToString();
+            var expiration = DateTime.UtcNow.AddHours(1);
+            await _authService.SavePasswordResetTokenAsync(account.AccountId, token, expiration);
+
+            await _emailService.SendPasswordResetEmailAsync(request.Email, token);
+
+            return Ok(new { message = "If an account with that email exists, you will receive a password reset email." });
+        }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] DTOs.Auth.ResetPasswordRequest request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            var account = await _authService.GetAccountByEmailAsync(request.Email);
+            if (account == null)
+                return BadRequest("Invalid request.");
+            var tokenValid = await _authService.VerifyPasswordResetTokenAsync(account.AccountId, request.Token);
+            if (!tokenValid)
+                return BadRequest("Invalid or expired token.");
+            account.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            await _authService.UpdateAccountAsync(account);
+            await _authService.InvalidatePasswordResetTokenAsync(account.AccountId, request.Token);
+            return Ok(new { message = "Password reset successfully." });
+        }
         private async Task<IActionResult> ProcessGoogleAuthentication(ClaimsPrincipal externalUser)
         {
             var email = externalUser.FindFirst(ClaimTypes.Email)?.Value;

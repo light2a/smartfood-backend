@@ -51,15 +51,15 @@ namespace BLL.Services
                 orderItems.Add(orderItem);
             }
 
-            // Determine shipping fee
+            // ✅ Determine shipping fee based on enum value
             decimal shippingFee = 0;
-            if (request.OrderType.Equals("Delivery", StringComparison.OrdinalIgnoreCase))
+            if (request.OrderType == OrderType.Delivery)
             {
-                // Future: replace with distance-based calculation
+                // Later: replace with distance-based calculation
                 shippingFee = 15000m;
             }
 
-            // Create order with order type and initial status
+            // ✅ Create order with enum OrderType
             var order = new Order
             {
                 CustomerAccountId = customerAccountId,
@@ -90,6 +90,7 @@ namespace BLL.Services
                 Message = $"Order created with type '{order.OrderType}' and status 'Created'."
             };
         }
+
 
         public async Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus, string? note = null)
         {

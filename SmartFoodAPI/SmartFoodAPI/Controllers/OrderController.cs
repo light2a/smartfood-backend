@@ -57,6 +57,7 @@ namespace SmartFoodAPI.Controllers
             }
         }
 
+
         [HttpPut("{orderId}/status")]
         [Authorize(Roles = "admin,manager,seller")]
         public async Task<IActionResult> UpdateStatus(int orderId, [FromQuery] string newStatus, [FromQuery] string? note)

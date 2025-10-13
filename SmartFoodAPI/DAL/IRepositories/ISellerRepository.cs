@@ -12,5 +12,6 @@ namespace DAL.IRepositories
         Task UpdateAsync(Seller seller);
         Task DeleteAsync(int id);
         Task<Seller?> GetByUserAccountIdAsync(int accountId);
+        Task ApproveSellerAsync(int sellerId);
     }
 }

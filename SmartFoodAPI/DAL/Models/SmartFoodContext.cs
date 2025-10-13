@@ -78,6 +78,11 @@ namespace DAL.Models
                 entity.Property(e => e.Description).HasMaxLength(1000);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
 
+                entity.Property(e => e.Status)
+                  .HasConversion<string>()
+                  .HasDefaultValue(SellerStatus.Unavailable)
+                  .IsRequired();
+
                 entity.HasOne(s => s.User)
                     .WithMany()
                     .HasForeignKey(s => s.UserAccountId)
