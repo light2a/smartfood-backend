@@ -102,25 +102,9 @@ namespace DAL.Models
                     .HasForeignKey(r => r.AreaId);
 
                 entity.HasMany(r => r.Categories)
-                    .WithMany(c => c.Restaurants)
-                    .UsingEntity<Dictionary<string, object>>(
-                        "RestaurantCategory",
-                        j => j
-                            .HasOne<Category>()
-                            .WithMany()
-                            .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade),
-                        j => j
-                            .HasOne<Restaurant>()
-                            .WithMany()
-                            .HasForeignKey("RestaurantId")
-                            .OnDelete(DeleteBehavior.Cascade),
-                        j =>
-                        {
-                            j.HasKey("RestaurantId", "CategoryId");
-                            j.ToTable("RestaurantCategory");
-                        }
-                    );
+                    .WithOne(c => c.Restaurant)
+                    .HasForeignKey(c => c.RestaurantId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             // === MenuItem ===
@@ -135,6 +119,12 @@ namespace DAL.Models
                     .HasConversion<int>()
                     .HasDefaultValue(MenuItemStatus.DangBan);
                 entity.Property(e => e.LogoUrl).HasMaxLength(500);
+
+                entity.HasOne(m => m.Category)
+                    .WithMany(c => c.MenuItems)
+                    .HasForeignKey(m => m.CategoryId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 entity.HasOne(m => m.Restaurant)
                     .WithMany(r => r.MenuItems)
                     .HasForeignKey(m => m.RestaurantId);
@@ -238,13 +228,11 @@ namespace DAL.Models
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
                 entity.Property(e => e.Name).HasMaxLength(200).IsRequired();
                 entity.Property(e => e.Description).HasMaxLength(500);
-                entity.HasData(
-                    new Category { Id = 6, Name = "Món Việt", Description = "Nhà hàng chuyên phục vụ món ăn Việt Nam truyền thống" },
-                    new Category { Id = 7, Name = "Món Hàn", Description = "Ẩm thực Hàn Quốc: BBQ, kimchi, tokbokki..." },
-                    new Category { Id = 8, Name = "Món Nhật", Description = "Sushi, sashimi và các món ăn Nhật Bản hiện đại" },
-                    new Category { Id = 9, Name = "Món Âu", Description = "Các món ăn phong cách phương Tây" },
-                    new Category { Id = 10, Name = "Cà phê & Trà sữa", Description = "Quán cà phê, trà sữa, thức uống nhẹ" }
-                );
+
+                entity.HasMany(c => c.MenuItems)
+                    .WithOne(m => m.Category)
+                    .HasForeignKey(m => m.CategoryId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
 

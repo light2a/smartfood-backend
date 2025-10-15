@@ -12,6 +12,8 @@ namespace BLL.DTOs.MenuItem
     {
         [Required]
         public int RestaurantId { get; set; }
+        [Required]
+        public int CategoryId { get; set; }
         [Required, MaxLength(200)]
         public string Name { get; set; } = null!;
         public string? Description { get; set; }

@@ -17,5 +17,6 @@ namespace BLL.IServices
         Task UpdateAsync(int id, UpdateCategoryRequest request);
         Task DeleteAsync(int id);
         Task<IEnumerable<CategoryDto>> SearchAsync(string keyword);
+        Task<IEnumerable<CategoryDto>> GetByRestaurantAsync(int restaurantId);
     }
 }

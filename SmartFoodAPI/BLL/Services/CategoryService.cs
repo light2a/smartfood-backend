@@ -26,6 +26,7 @@ namespace BLL.Services
             return list.Select(c => new CategoryDto
             {
                 Id = c.Id,
+                RestaurantId = c.RestaurantId,
                 Name = c.Name,
                 Description = c.Description
             });
@@ -39,6 +40,7 @@ namespace BLL.Services
             return new CategoryDto
             {
                 Id = c.Id,
+                RestaurantId = c.RestaurantId,
                 Name = c.Name,
                 Description = c.Description
             };
@@ -48,6 +50,7 @@ namespace BLL.Services
         {
             var category = new Category
             {
+                RestaurantId = request.RestaurantId,
                 Name = request.Name,
                 Description = request.Description
             };
@@ -57,6 +60,7 @@ namespace BLL.Services
             return new CategoryDto
             {
                 Id = created.Id,
+                RestaurantId = created.RestaurantId,
                 Name = created.Name,
                 Description = created.Description
             };
@@ -68,6 +72,7 @@ namespace BLL.Services
             if (existing == null)
                 throw new KeyNotFoundException("Category not found");
 
+            existing.RestaurantId = request.RestaurantId;
             existing.Name = request.Name;
             existing.Description = request.Description;
             await _repo.UpdateAsync(existing);
@@ -84,11 +89,24 @@ namespace BLL.Services
             return list.Select(m => new CategoryDto
             {
                 Id = m.Id,
+                RestaurantId = m.RestaurantId,
                 Name = m.Name,
                 Description = m.Description,
-
             });
         }
+        public async Task<IEnumerable<CategoryDto>> GetByRestaurantAsync(int restaurantId)
+        {
+            var list = await _repo.GetAllAsync();
+            var filtered = list.Where(c => c.RestaurantId == restaurantId);
+            return filtered.Select(ToDto);
+        }
+        private CategoryDto ToDto(Category c) => new CategoryDto
+        {
+            Id = c.Id,
+            RestaurantId = c.RestaurantId,
+            Name = c.Name,
+            Description = c.Description
+        };
     }
 }
 

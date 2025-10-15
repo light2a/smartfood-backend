@@ -28,6 +28,8 @@ namespace BLL.Services
             return list.Select(m => new MenuItemDto
             {
                 Id = m.Id,
+                RestaurantId = m.RestaurantId,
+                CategoryId = m.CategoryId,
                 Name = m.Name,
                 Description = m.Description,
                 Price = m.Price,
@@ -42,6 +44,8 @@ namespace BLL.Services
             return item == null ? null : new MenuItemDto
             {
                 Id = item.Id,
+                RestaurantId = item.RestaurantId,
+                CategoryId = item.CategoryId,
                 Name = item.Name,
                 Description = item.Description,
                 Price = item.Price,
@@ -59,6 +63,7 @@ namespace BLL.Services
             var item = new MenuItem
             {
                 RestaurantId = request.RestaurantId,
+                CategoryId = request.CategoryId,
                 Name = request.Name,
                 Description = request.Description,
                 Price = request.Price,
@@ -71,6 +76,8 @@ namespace BLL.Services
             return new MenuItemDto
             {
                 Id = created.Id,
+                RestaurantId = created.RestaurantId,
+                CategoryId = created.CategoryId,
                 Name = created.Name,
                 Description = created.Description,
                 Price = created.Price,
@@ -85,6 +92,8 @@ namespace BLL.Services
             if (existing == null)
                 throw new KeyNotFoundException("Menu item not found");
 
+            existing.RestaurantId = request.RestaurantId;
+            existing.CategoryId = request.CategoryId;
             existing.Name = request.Name;
             existing.Description = request.Description;
             existing.Price = request.Price;
@@ -108,6 +117,8 @@ namespace BLL.Services
             return list.Select(m => new MenuItemDto
             {
                 Id = m.Id,
+                RestaurantId = m.RestaurantId,
+                CategoryId = m.CategoryId,
                 Name = m.Name,
                 Description = m.Description,
                 Price = m.Price,
@@ -124,6 +135,25 @@ namespace BLL.Services
             existing.Status = status;
             await _repo.UpdateAsync(existing);
         }
+        public async Task<IEnumerable<MenuItemDto>> GetByRestaurantAsync(int restaurantId)
+        {
+            var list = await _repo.GetByRestaurantAsync(restaurantId);
+            return list.Select(ToDto);
+        }
 
+        public async Task<IEnumerable<MenuItemDto>> GetByCategoryAsync(int categoryId)
+        {
+            var list = await _repo.GetByCategoryAsync(categoryId);
+            return list.Select(ToDto);
+        }
+        private MenuItemDto ToDto(MenuItem m) => new()
+        {
+            Id = m.Id,
+            Name = m.Name,
+            Description = m.Description,
+            Price = m.Price,
+            Status = m.Status,
+            LogoUrl = m.LogoUrl
+        };
     }
 }

@@ -15,6 +15,8 @@ namespace DAL.IRepositories
         Task UpdateAsync(MenuItem item);
         Task DeleteAsync(int id);
         Task<IEnumerable<MenuItem>> SearchAsync(string keyword);
+        Task<IEnumerable<MenuItem>> GetByRestaurantAsync(int restaurantId);
+        Task<IEnumerable<MenuItem>> GetByCategoryAsync(int categoryId);
         Task ToggleStatusAsync(int id, MenuItemStatus status);
     }
 }

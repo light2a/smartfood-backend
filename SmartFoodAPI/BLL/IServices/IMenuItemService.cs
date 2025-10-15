@@ -17,6 +17,8 @@ namespace BLL.IServices
         Task UpdateAsync(int id, UpdateMenuItemRequest request, IFormFile? logo);
         Task DeleteAsync(int id);
         Task<IEnumerable<MenuItemDto>> SearchAsync(string keyword);
+        Task<IEnumerable<MenuItemDto>> GetByRestaurantAsync(int restaurantId);
+        Task<IEnumerable<MenuItemDto>> GetByCategoryAsync(int categoryId);
         Task ToggleStatusAsync(int id, MenuItemStatus status);
     }
 }
