@@ -99,39 +99,12 @@ namespace SmartFoodAPI.Controllers
         [HttpPost("register-seller")]
         public async Task<IActionResult> RegisterSeller([FromBody] RegisterSellerRequest request)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState); // ✅ validation handled by attributes
+
             try
             {
-                // 1. Validate required fields
-                if (string.IsNullOrWhiteSpace(request.FullName) ||
-                    string.IsNullOrWhiteSpace(request.Email) ||
-                    string.IsNullOrWhiteSpace(request.Password) ||
-                    string.IsNullOrWhiteSpace(request.ConfirmPassword))
-                {
-                    return BadRequest(new { error = "All fields are required." });
-                }
-
-                // 2. Validate email format
-                var emailRegex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
-                if (!emailRegex.IsMatch(request.Email))
-                    return BadRequest(new { error = "Invalid email format." });
-
-                // 3. Validate password
-                var passwordRegex = new Regex(@"^(?=.*\d).{6,}$");
-                if (!passwordRegex.IsMatch(request.Password))
-                    return BadRequest(new { error = "Password must be at least 6 characters and contain at least one number." });
-
-                if (request.Password != request.ConfirmPassword)
-                    return BadRequest(new { error = "Password and confirmation do not match." });
-
-                // 4. Optional phone validation
-                if (!string.IsNullOrEmpty(request.PhoneNumber))
-                {
-                    var phoneRegex = new Regex(@"^\+?\d{10,15}$");
-                    if (!phoneRegex.IsMatch(request.PhoneNumber))
-                        return BadRequest(new { error = "Invalid phone number format." });
-                }
-
-                // 5. Register seller (inactive by default)
+                // 1️⃣ Register seller (inactive by default)
                 var account = await _authService.RegisterSellerAsync(
                     request.FullName,
                     request.Email,
@@ -139,13 +112,13 @@ namespace SmartFoodAPI.Controllers
                     request.PhoneNumber
                 );
 
-                // 6. Generate OTP (6-digit)
+                // 2️⃣ Generate OTP (6-digit)
                 var otp = new Random().Next(100000, 999999).ToString();
                 var expiration = DateTime.UtcNow.AddMinutes(5);
 
                 await _authService.SaveOtpAsync(request.Email, otp, expiration);
 
-                // 7. Send OTP email
+                // 3️⃣ Send OTP email
                 await _emailService.SendOtpEmailAsync(request.Email, otp);
 
                 return Ok(new

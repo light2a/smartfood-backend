@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using SmartFoodAPI.ValidationAttributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace SmartFoodAPI.DTOs.Auth
 {
@@ -6,6 +7,8 @@ namespace SmartFoodAPI.DTOs.Auth
     {
         public string Email { get; set; } = string.Empty;
         public string Token { get; set; } = string.Empty;
+        [Required]
+        [CustomPasswordValidation]
         public string NewPassword { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Confirm new password is required.")]
