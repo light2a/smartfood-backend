@@ -22,13 +22,14 @@ namespace SmartFoodAPI.Controllers
         }
 
         /// <summary>
-        /// Create a new order with multiple menu items.
+        /// Create a new order with multiple menu items and order type (Pickup or Delivery).
         /// </summary>
         /// <remarks>
         /// Example JSON request:
         /// 
         ///     POST /api/order/create
         ///     {
+        ///       "orderType": "Delivery",
         ///       "items": [
         ///         { "menuItemId": 1, "quantity": 2 },
         ///         { "menuItemId": 3, "quantity": 1 }
@@ -55,6 +56,7 @@ namespace SmartFoodAPI.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
 
         [HttpPut("{orderId}/status")]
         [Authorize(Roles = "admin,manager,seller")]

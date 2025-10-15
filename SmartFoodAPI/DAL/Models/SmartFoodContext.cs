@@ -78,6 +78,11 @@ namespace DAL.Models
                 entity.Property(e => e.Description).HasMaxLength(1000);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
 
+                entity.Property(e => e.Status)
+                  .HasConversion<string>()
+                  .HasDefaultValue(SellerStatus.Unavailable)
+                  .IsRequired();
+
                 entity.HasOne(s => s.User)
                     .WithMany()
                     .HasForeignKey(s => s.UserAccountId)
@@ -140,6 +145,7 @@ namespace DAL.Models
                 entity.Property(e => e.CommissionPercent).HasColumnType("decimal(5,2)").HasDefaultValue(0);
                 entity.Property(e => e.FinalAmount).HasColumnType("decimal(18,2)");
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+                entity.Property(e => e.OrderType).HasMaxLength(50).IsRequired();
 
                 entity.HasOne(o => o.Customer)
                     .WithMany()

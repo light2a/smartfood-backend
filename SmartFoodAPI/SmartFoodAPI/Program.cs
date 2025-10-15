@@ -1,4 +1,4 @@
-using DAL.Models;
+﻿using DAL.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -13,7 +13,10 @@ using DAL.IRepositories;
 using DAL.Repositories;
 using BLL.IServices;
 using BLL.Services;
-
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.Extensions.Logging;
+using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+var _logger = loggerFactory.CreateLogger<Program>();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +37,7 @@ builder.Services.AddScoped<IAreaRepository, AreaRepository>();
 builder.Services.AddScoped<IAreaService, AreaService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -66,7 +70,8 @@ builder.Services.AddSwaggerGen(c =>
         { jwtSecurityScheme, Array.Empty<string>() }
     });
 });
-
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 builder.Services.AddDbContext<SmartFoodContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -123,23 +128,60 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 return context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(error));
             }
         };
-    });
 
-builder.Services.AddCors(option =>
+    })
+.AddCookie("ExternalCookie", options =>
 {
-    option.AddPolicy("AllowFrontend", policy =>
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.HttpOnly = true;
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+})
+.AddGoogle(options =>
+{
+    options.SignInScheme = "ExternalCookie";
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    options.CallbackPath = "/api/Auth/google-response";
+    options.SaveTokens = true;
+
+    // Add scopes
+    options.Scope.Add("profile");
+    options.Scope.Add("email");
+
+    // Add events to handle the duplicate request issue
+    options.Events = new Microsoft.AspNetCore.Authentication.OAuth.OAuthEvents
+    {
+        OnRemoteFailure = context =>
+        {
+            context.Response.Redirect($"{builder.Configuration["Frontend:BaseUrl"]}/auth/failed?error=oauth_failed");
+            context.HandleResponse();
+            return Task.CompletedTask;
+        }
+    };
+});
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.None; // Important for OAuth
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Important for HTTPS
+});
+
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins("http://localhost:5173")
-        .AllowAnyHeader()
-        .AllowAnyMethod();
-    }
-
-
-    );
-}
-
-
-);
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
@@ -163,11 +205,38 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseCors("AllowFrontend");
 
+app.UseSession();
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api/Auth/google-response") &&
+        !context.Request.Query.ContainsKey("state") &&
+        !context.Request.Query.ContainsKey("code"))
+    {
+        // This is the duplicate empty callback — short-circuit safely
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogWarning("[GoogleOAuth] Duplicate empty callback intercepted by middleware.");
+        context.Response.StatusCode = 200;
+        await context.Response.WriteAsJsonAsync(new
+        {
+            message = "Duplicate Google callback ignored (no state or code).",
+            handled = true
+        });
+        return;
+    }
+
+    await next();
+});
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseMiddleware<ErrorHandlingMiddleware>();
+app.MapFallback(context =>
+{
+    context.Response.StatusCode = 404;
+    return context.Response.WriteAsync("Endpoint not found");
+});
 app.MapControllers();
 
 app.Run();

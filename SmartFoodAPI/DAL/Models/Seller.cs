@@ -13,6 +13,7 @@ namespace DAL.Models
         public string DisplayName { get; set; } = null!;
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public SellerStatus Status { get; set; } = SellerStatus.Unavailable;
 
         public virtual Account User { get; set; }
         public virtual ICollection<Restaurant> Restaurants { get; set; } = new List<Restaurant>();

@@ -4,6 +4,7 @@ using DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(SmartFoodContext))]
-    partial class SmartFoodContextModelSnapshot : ModelSnapshot
+    [Migration("20251013085638_UpdateSeller")]
+    partial class UpdateSeller
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -126,14 +129,41 @@ namespace DAL.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<int>("RestaurantId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("RestaurantId");
-
                     b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 6,
+                            Description = "Nhà hàng chuyên phục vụ món ăn Việt Nam truyền thống",
+                            Name = "Món Việt"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Description = "Ẩm thực Hàn Quốc: BBQ, kimchi, tokbokki...",
+                            Name = "Món Hàn"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Description = "Sushi, sashimi và các món ăn Nhật Bản hiện đại",
+                            Name = "Món Nhật"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Description = "Các món ăn phong cách phương Tây",
+                            Name = "Món Âu"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Description = "Quán cà phê, trà sữa, thức uống nhẹ",
+                            Name = "Cà phê & Trà sữa"
+                        });
                 });
 
             modelBuilder.Entity("DAL.Models.Feedback", b =>
@@ -212,9 +242,6 @@ namespace DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -240,8 +267,6 @@ namespace DAL.Migrations
                         .HasDefaultValue(1);
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
 
                     b.HasIndex("RestaurantId");
 
@@ -485,6 +510,21 @@ namespace DAL.Migrations
                     b.ToTable("Sellers");
                 });
 
+            modelBuilder.Entity("RestaurantCategory", b =>
+                {
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RestaurantId", "CategoryId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("RestaurantCategory", (string)null);
+                });
+
             modelBuilder.Entity("DAL.Models.Account", b =>
                 {
                     b.HasOne("DAL.Models.Role", "Role")
@@ -493,17 +533,6 @@ namespace DAL.Migrations
                         .HasConstraintName("FK_Account_Role");
 
                     b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("DAL.Models.Category", b =>
-                {
-                    b.HasOne("DAL.Models.Restaurant", "Restaurant")
-                        .WithMany("Categories")
-                        .HasForeignKey("RestaurantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Restaurant");
                 });
 
             modelBuilder.Entity("DAL.Models.Feedback", b =>
@@ -542,19 +571,11 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.MenuItem", b =>
                 {
-                    b.HasOne("DAL.Models.Category", "Category")
-                        .WithMany("MenuItems")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("DAL.Models.Restaurant", "Restaurant")
                         .WithMany("MenuItems")
                         .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Category");
 
                     b.Navigation("Restaurant");
                 });
@@ -636,14 +657,24 @@ namespace DAL.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("RestaurantCategory", b =>
+                {
+                    b.HasOne("DAL.Models.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DAL.Models.Restaurant", null)
+                        .WithMany()
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DAL.Models.Area", b =>
                 {
                     b.Navigation("Restaurants");
-                });
-
-            modelBuilder.Entity("DAL.Models.Category", b =>
-                {
-                    b.Navigation("MenuItems");
                 });
 
             modelBuilder.Entity("DAL.Models.MenuItem", b =>
@@ -662,8 +693,6 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.Restaurant", b =>
                 {
-                    b.Navigation("Categories");
-
                     b.Navigation("Feedbacks");
 
                     b.Navigation("MenuItems");

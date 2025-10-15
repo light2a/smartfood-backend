@@ -2,13 +2,15 @@
 using DAL.IRepositories;
 using DAL.Models;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-using BCrypt.Net;
 
 namespace BLL.Services
 {
@@ -17,12 +19,14 @@ namespace BLL.Services
         private readonly IAccountRepository _accountRepository;
         private readonly ISellerRepository _sellerRepository;
         private readonly IConfiguration _configuration;
+        private readonly IDistributedCache _cache;
 
-        public AuthService(IAccountRepository accountRepository, ISellerRepository sellerRepository, IConfiguration configuration)
+        public AuthService(IAccountRepository accountRepository, ISellerRepository sellerRepository, IConfiguration configuration, IDistributedCache cache)
         {
             _accountRepository = accountRepository;
             _sellerRepository = sellerRepository;
             _configuration = configuration;
+            _cache = cache;
         }
 
         public async Task<string?> LoginAsync(string email, string password)
@@ -31,32 +35,31 @@ namespace BLL.Services
             if (account == null || !BCrypt.Net.BCrypt.Verify(password, account.Password) || account.IsActive == false)
                 return null;
 
-            // Now generate JWT with SellerId if applicable
             return await GenerateJwtTokenAsync(account);
         }
 
-        public async Task<Account> RegisterAsync(string fullName, string email, string password, string phonenumber)
+        public async Task<Account> RegisterAsync(string fullName, string email, string password, string phoneNumber)
         {
             var existing = await _accountRepository.GetByEmailAsync(email);
             if (existing != null)
                 throw new Exception("Email already registered.");
 
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
-
             var account = new Account
             {
                 FullName = fullName,
                 Email = email,
-                Password = hashedPassword,
+                Password = BCrypt.Net.BCrypt.HashPassword(password),
                 IsActive = true,
-                RoleId = 1, // Default = Customer
-                PhoneNumber = phonenumber
+                RoleId = 1,
+                PhoneNumber = phoneNumber,
+                CreatedAt = DateTime.UtcNow,
+                UpdateAt = DateTime.UtcNow
             };
 
             return await _accountRepository.AddAsync(account);
         }
 
-        public async Task<Account> RegisterSellerAsync(string fullName, string email, string password, string phonenumber)
+        public async Task<Account> RegisterSellerAsync(string fullName, string email, string password, string phoneNumber)
         {
             var existing = await _accountRepository.GetByEmailAsync(email);
             if (existing != null)
@@ -69,19 +72,21 @@ namespace BLL.Services
                 FullName = fullName,
                 Email = email,
                 Password = hashedPassword,
-                IsActive = false, // inactive until admin approves
-                RoleId = 2,       // Seller role
-                PhoneNumber = phonenumber
+                IsActive = false,
+                RoleId = 2,
+                PhoneNumber = phoneNumber,
+                CreatedAt = DateTime.UtcNow,
+                UpdateAt = DateTime.UtcNow
             };
 
             var createdAccount = await _accountRepository.AddAsync(account);
 
-            // Create corresponding seller entry
             var seller = new Seller
             {
                 UserAccountId = createdAccount.AccountId,
                 DisplayName = createdAccount.FullName,
-                Description = null
+                Description = null,
+                Status = SellerStatus.Unavailable
             };
 
             await _sellerRepository.AddAsync(seller);
@@ -89,14 +94,107 @@ namespace BLL.Services
             return createdAccount;
         }
 
-        /// <summary>
-        /// Generates JWT token, including SellerId if user is a seller.
-        /// </summary>
-        private async Task<string> GenerateJwtTokenAsync(Account account)
+        // ✅ OTP Save
+        public async Task<bool> SaveOtpAsync(string email, string otp, DateTime expiration)
+        {
+            var otpInfo = new { Code = otp, Expiration = expiration };
+            var otpJson = JsonSerializer.Serialize(otpInfo);
+
+            try
+            {
+                await _cache.SetStringAsync($"OTP_{email}", otpJson, new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpiration = expiration
+                });
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // ✅ OTP Verify
+        public async Task<bool> VerifyOtpAsync(string email, string otp)
+        {
+            var cached = await _cache.GetStringAsync($"OTP_{email}");
+            if (cached == null) return false;
+
+            var otpInfo = JsonSerializer.Deserialize<OtpInfo>(cached);
+            if (otpInfo == null || otpInfo.Expiration < DateTime.UtcNow || otpInfo.Code != otp)
+                return false;
+
+            await _cache.RemoveAsync($"OTP_{email}");
+            return true;
+        }
+
+        // ✅ Forgot/Reset Password
+        public async Task<Account?> GetAccountByEmailAsync(string email)
+            => await _accountRepository.GetByEmailAsync(email);
+
+        public async Task SavePasswordResetTokenAsync(int accountId, string token, DateTime expiration)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null) throw new Exception("Account not found.");
+
+            account.ResetToken = token;
+            account.ResetTokenExpires = expiration;
+            await _accountRepository.UpdateAsync(account);
+        }
+
+        public async Task<bool> VerifyPasswordResetTokenAsync(int accountId, string token)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            return account != null &&
+                   account.ResetToken == token &&
+                   account.ResetTokenExpires.HasValue &&
+                   account.ResetTokenExpires.Value > DateTime.UtcNow;
+        }
+
+        public async Task InvalidatePasswordResetTokenAsync(int accountId, string token)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null) return;
+
+            account.ResetToken = null;
+            account.ResetTokenExpires = null;
+            await _accountRepository.UpdateAsync(account);
+        }
+
+        public async Task UpdateAccountAsync(Account account)
+            => await _accountRepository.UpdateAsync(account);
+
+        public async Task<Account> HandleExternalLoginAsync(string email, string fullName, string provider, string providerKey)
+        {
+            var existing = await _accountRepository.GetByEmailAsync(email);
+            if (existing != null)
+            {
+                existing.FullName = fullName ?? existing.FullName;
+                existing.ExternalProvider = provider;
+                existing.ExternalProviderKey = providerKey;
+                existing.UpdateAt = DateTime.UtcNow;
+                return await _accountRepository.UpdateAsync(existing);
+            }
+
+            var newAccount = new Account
+            {
+                Email = email,
+                FullName = fullName,
+                Password = string.Empty,
+                IsActive = false,
+                RoleId = 1,
+                ExternalProvider = provider,
+                ExternalProviderKey = providerKey,
+                CreatedAt = DateTime.UtcNow,
+                UpdateAt = DateTime.UtcNow
+            };
+
+            return await _accountRepository.AddAsync(newAccount);
+        }
+
+        public async Task<string> GenerateJwtTokenAsync(Account account)
         {
             int? sellerId = null;
-
-            // Only lookup seller if role is "Seller"
             if (account.Role?.RoleName?.Equals("Seller", StringComparison.OrdinalIgnoreCase) == true)
             {
                 var seller = await _sellerRepository.GetByUserAccountIdAsync(account.AccountId);
@@ -111,9 +209,7 @@ namespace BLL.Services
             };
 
             if (sellerId.HasValue)
-            {
                 claims.Add(new Claim("SellerId", sellerId.Value.ToString()));
-            }
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -128,5 +224,47 @@ namespace BLL.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+        public async Task InvalidateOtpAsync(string email)
+        {
+            await _cache.RemoveAsync(GetOtpCacheKey(email));
+        }
+
+        private string GetOtpCacheKey(string email)
+        {
+            return $"OTP_{email}";
+        }
+        public async Task<OtpInfo> GetCurrentOtpAsync(string email)
+        {
+            var otpJson = await _cache.GetStringAsync(GetOtpCacheKey(email));
+            if (string.IsNullOrEmpty(otpJson))
+                return null;
+            return JsonSerializer.Deserialize<OtpInfo>(otpJson);
+        }
+
+        public async Task<Account> UpdateAccountAsync(int accountId, string fullName, string phoneNumber)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+                throw new Exception("Account not found.");
+
+            account.FullName = fullName;
+            account.PhoneNumber = phoneNumber;
+            account.UpdateAt = DateTime.UtcNow;
+
+            return await _accountRepository.UpdateAsync(account);
+        }
+
+        public async Task<Account> DeactivateAccountAsync(int accountId)
+        {
+            var account = await _accountRepository.GetByIdAsync(accountId);
+            if (account == null)
+                throw new Exception("Account not found.");
+
+            account.IsActive = false;
+            account.UpdateAt = DateTime.UtcNow;
+
+            return await _accountRepository.UpdateAsync(account);
+        }
+
     }
 }

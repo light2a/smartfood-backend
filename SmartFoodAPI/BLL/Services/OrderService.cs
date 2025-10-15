@@ -51,24 +51,33 @@ namespace BLL.Services
                 orderItems.Add(orderItem);
             }
 
-            // Create initial order with "Created" status
+            // ✅ Determine shipping fee based on enum value
+            decimal shippingFee = 0;
+            if (request.OrderType == OrderType.Delivery)
+            {
+                // Later: replace with distance-based calculation
+                shippingFee = 15000m;
+            }
+
+            // ✅ Create order with enum OrderType
             var order = new Order
             {
                 CustomerAccountId = customerAccountId,
                 RestaurantId = restaurantId,
-                ShippingFee = 0,
-                CommissionPercent = 0,
                 TotalAmount = totalAmount,
-                FinalAmount = totalAmount,
+                ShippingFee = shippingFee,
+                CommissionPercent = 0,
+                FinalAmount = totalAmount + shippingFee,
+                OrderType = request.OrderType,
                 OrderItems = orderItems,
                 StatusHistory = new List<OrderStatusHistory>
-                {
-                    new OrderStatusHistory
-                    {
-                        Status = "Created",
-                        Note = "Order created successfully."
-                    }
-                }
+        {
+            new OrderStatusHistory
+            {
+                Status = "Created",
+                Note = "Order created successfully."
+            }
+        }
             };
 
             var createdOrder = await _orderRepository.AddAsync(order);
@@ -77,10 +86,11 @@ namespace BLL.Services
             {
                 OrderId = createdOrder.Id,
                 TotalAmount = totalAmount,
-                FinalAmount = totalAmount,
-                Message = "Order created with status: Created."
+                FinalAmount = order.FinalAmount,
+                Message = $"Order created with type '{order.OrderType}' and status 'Created'."
             };
         }
+
 
         public async Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus, string? note = null)
         {

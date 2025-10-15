@@ -52,5 +52,22 @@ namespace DAL.Repositories
             return await _context.Sellers
                 .FirstOrDefaultAsync(s => s.UserAccountId == accountId);
         }
+
+        public async Task ApproveSellerAsync(int sellerId)
+        {
+            var seller = await _context.Sellers.Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.Id == sellerId);
+
+            if (seller == null)
+                throw new Exception("Seller not found.");
+
+            seller.Status = SellerStatus.Available;
+
+            if (seller.User != null)
+                seller.User.IsActive = true; // ✅ Activate the linked account too
+
+            await _context.SaveChangesAsync();
+        }
+
     }
 }
