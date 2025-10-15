@@ -55,6 +55,23 @@ namespace DAL.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
+        public async Task<IEnumerable<MenuItem>> GetByRestaurantAsync(int restaurantId)
+        {
+            return await _context.MenuItems
+                .Include(m => m.Category)
+                .Where(m => m.RestaurantId == restaurantId)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<IEnumerable<MenuItem>> GetByCategoryAsync(int categoryId)
+        {
+            return await _context.MenuItems
+                .Include(m => m.Restaurant)
+                .Where(m => m.CategoryId == categoryId)
+                .AsNoTracking()
+                .ToListAsync();
+        }
         public async Task ToggleStatusAsync(int id, MenuItemStatus status)
         {
             var existing = await _context.MenuItems.FindAsync(id);

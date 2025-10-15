@@ -14,15 +14,13 @@ namespace DAL.Migrations
             //    name: "Rating",
             //    table: "Restaurants");
 
-            migrationBuilder.AlterColumn<string>(
+            migrationBuilder.AddColumn<string>(
                 name: "LogoUrl",
                 table: "MenuItems",
                 type: "nvarchar(500)",
                 maxLength: 500,
-                nullable: true,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)",
-                oldNullable: true);
+                nullable: true);
+
         }
 
         /// <inheritdoc />

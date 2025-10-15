@@ -11,6 +11,8 @@ namespace BLL.DTOs.Category
     public class CreateCategoryRequest
     {
         [Required]
+        public int RestaurantId { get; set; }
+        [Required]
         public string Name { get; set; } = null!;
         [Required]
         public string? Description { get; set; }

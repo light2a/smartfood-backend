@@ -26,6 +26,14 @@ public class MenuItemsController : ControllerBase
         return Ok(item);
     }
 
+    [HttpGet("restaurant/{restaurantId:int}")]
+    public async Task<IActionResult> GetByRestaurant(int restaurantId) =>
+            Ok(await _service.GetByRestaurantAsync(restaurantId));
+
+    [HttpGet("category/{categoryId:int}")]
+    public async Task<IActionResult> GetByCategory(int categoryId) =>
+        Ok(await _service.GetByCategoryAsync(categoryId));
+
     [HttpPost]
     [Authorize(Roles = "Admin,Seller")]
     public async Task<IActionResult> Create([FromForm] CreateMenuItemRequest request, IFormFile? logo)
