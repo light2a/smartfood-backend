@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using BLL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
+using Stripe;
 
 namespace SmartFoodAPI.Controllers
 {
@@ -147,7 +148,7 @@ namespace SmartFoodAPI.Controllers
             if (request.Password != request.ConfirmPassword)
                 return BadRequest(new { error = "Password and Confirm Password do not match." });
 
-            Account account;
+            DAL.Models.Account account;
             try
             {
                 account = await _authService.RegisterAsync(
@@ -483,6 +484,44 @@ namespace SmartFoodAPI.Controllers
             _logger.LogInformation("[GoogleOAuth] Redirecting to: {RedirectUrl}", redirectUrl);
             return Redirect(redirectUrl);
         }
+
+        //[HttpPost("connect")]
+        //[Authorize(Roles = "Seller")]
+        //public async Task<IActionResult> CreateStripeAccountLink()
+        //{
+        //    var sellerId = int.Parse(User.FindFirst("SellerId") ?? throw new Exception("Unauthorized"));
+        //    var seller = await _sellerRepository.GetByIdAsync(sellerId);
+        //    if (seller == null)
+        //        return NotFound("Seller not found");
+
+        //    StripeConfiguration.ApiKey = _configuration["Stripe:SecretKey"];
+
+        //    // Create a Connect account if none exists
+        //    if (string.IsNullOrEmpty(seller.StripeAccountId))
+        //    {
+        //        var accountService = new AccountService();
+        //        var account = await accountService.CreateAsync(new AccountCreateOptions
+        //        {
+        //            Type = "express",
+        //            Email = seller.User.Email
+        //        });
+
+        //        seller.StripeAccountId = account.Id;
+        //        await _sellerRepository.UpdateAsync(seller);
+        //    }
+
+        //    // Create an onboarding link
+        //    var accountLinkService = new AccountLinkService();
+        //    var link = await accountLinkService.CreateAsync(new AccountLinkCreateOptions
+        //    {
+        //        Account = seller.StripeAccountId,
+        //        RefreshUrl = "https://your-frontend.com/seller/stripe/refresh",
+        //        ReturnUrl = "https://your-frontend.com/seller/stripe/complete",
+        //        Type = "account_onboarding"
+        //    });
+
+        //    return Ok(new { url = link.Url });
+        //}
 
     }
 }

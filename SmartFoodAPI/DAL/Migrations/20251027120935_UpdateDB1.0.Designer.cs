@@ -4,6 +4,7 @@ using DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(SmartFoodContext))]
-    partial class SmartFoodContextModelSnapshot : ModelSnapshot
+    [Migration("20251027120935_UpdateDB1.0")]
+    partial class UpdateDB10
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -468,17 +471,11 @@ namespace DAL.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<bool>("IsStripeOnboardingCompleted")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasColumnType("nvarchar(max)")
                         .HasDefaultValue("Unavailable");
-
-                    b.Property<string>("StripeAccountId")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserAccountId")
                         .HasColumnType("int");

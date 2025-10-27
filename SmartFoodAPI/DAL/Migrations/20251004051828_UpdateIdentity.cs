@@ -53,6 +53,7 @@ namespace DAL.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime", nullable: true, defaultValueSql: "(getdate())"),
                     UpdateAt = table.Column<DateTime>(type: "datetime", nullable: true, defaultValueSql: "(getdate())"),
                     RoleId = table.Column<int>(type: "int", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
                     ResetToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ResetTokenExpires = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ExternalProvider = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
