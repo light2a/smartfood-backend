@@ -21,7 +21,10 @@ namespace DAL.Repositories
 
         public async Task<IEnumerable<Restaurant>> GetAllAsync()
         {
-            return await _context.Restaurants.AsNoTracking().ToListAsync();
+            return await _context.Restaurants.Include(
+                r => r.Area)
+                .AsNoTracking()
+                .ToListAsync();
         }
 
         public async Task<Restaurant?> GetByIdAsync(int id)

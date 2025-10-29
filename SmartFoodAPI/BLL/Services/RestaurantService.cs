@@ -114,7 +114,13 @@ namespace BLL.Services
             AreaId = r.AreaId,
             Name = r.Name,
             Address = r.Address,
-            IsActive = r.IsActive
+            IsActive = r.IsActive,
+            Coordinate = r.Coordinate,
+            OpenTime = r.OpenTime,
+            CloseTime = r.CloseTime,
+            Hotline = r.Hotline,
+            LogoUrl = r.LogoUrl,
+            AreaName = r.Area?.Name,
         };
         public async Task<IEnumerable<RestaurantDto>> SearchAsync(string? keyword)
         {

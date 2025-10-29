@@ -30,7 +30,7 @@ namespace SmartFoodAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateAreaRequest request)
         {
             var created = await _service.CreateAsync(request);
