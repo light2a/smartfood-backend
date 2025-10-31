@@ -10,6 +10,7 @@ namespace DAL.IRepositories
     public interface IRestaurantRepository
     {
         Task<IEnumerable<Restaurant>> GetAllAsync();
+        Task<PagedResult<Restaurant>> GetPagedAsync(int pageNumber, int pageSize, string? keyword);
         Task<Restaurant?> GetByIdAsync(int id);
         Task<Restaurant> AddAsync(Restaurant restaurant);
         Task UpdateAsync(Restaurant restaurant);

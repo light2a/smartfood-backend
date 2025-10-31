@@ -36,6 +36,15 @@ namespace SmartFoodAPI.Controllers
         ///       ]
         ///     }
         /// </remarks>
+        /// 
+
+        [HttpGet("paging")]
+        public async Task<IActionResult> GetPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? keyword = null)
+        {
+            var result = await _orderService.GetPagedAsync(pageNumber, pageSize, keyword);
+            return Ok(result);
+        }
+
         [HttpPost("create")]
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)

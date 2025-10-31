@@ -10,6 +10,7 @@ namespace DAL.IRepositories
     public interface ICategoryRepository
     {
         Task<IEnumerable<Category>> GetAllAsync();
+        Task<PagedResult<Category>> GetPagedAsync(int pageNumber, int pageSize, string? keyword);
         Task<Category?> GetByIdAsync(int id);
         Task<Category> AddAsync(Category category);
         Task UpdateAsync(Category category);

@@ -30,6 +30,20 @@ namespace BLL.Services
             return list.Select(ToDto);
         }
 
+        public async Task<PagedResult<RestaurantDto>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
+        {
+            var pagedResult = await _repo.GetPagedAsync(pageNumber, pageSize, keyword);
+
+            return new PagedResult<RestaurantDto>
+            {
+                Items = pagedResult.Items.Select(ToDto),
+                TotalItems = pagedResult.TotalItems,
+                PageNumber = pagedResult.PageNumber,
+                PageSize = pagedResult.PageSize
+            };
+        }
+
+
         public async Task<RestaurantDto?> GetByIdAsync(int id)
         {
             var r = await _repo.GetByIdAsync(id);
@@ -41,8 +55,6 @@ namespace BLL.Services
             string? logoUrl = null;
             if (logo != null)
                 logoUrl = await _imageService.UploadAsync(logo);
-
-            var categories = await GetCategoriesByIdsAsync(request.CategoryIds);
 
             var restaurant = new Restaurant
             {

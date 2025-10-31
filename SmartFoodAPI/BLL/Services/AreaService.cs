@@ -25,6 +25,23 @@ namespace BLL.Services
             });
         }
 
+        public async Task<PagedResult<AreaDto>> GetPagedAsync(int pageNumber, int pageSize, string keyword)
+        {
+            var pagedResult = await _repo.GetPagedAsync(pageNumber, pageSize, keyword);
+            return new PagedResult<AreaDto>
+            {
+                Items = pagedResult.Items.Select(a => new AreaDto
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    City = a.City
+                }),
+                TotalItems = pagedResult.TotalItems,
+                PageNumber = pagedResult.PageNumber,
+                PageSize = pagedResult.PageSize
+            };
+        }
+
         public async Task<AreaDto?> GetByIdAsync(int id)
         {
             var a = await _repo.GetByIdAsync(id);

@@ -14,6 +14,31 @@ namespace DAL.Repositories
             _context = context;
         }
 
+        public async Task<PagedResult<Order>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
+        {
+            var query = _context.Orders.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                query = query.Where(o => o.Customer.FullName.Contains(keyword) ||
+                                         o.Restaurant.Name.Contains(keyword));
+            }
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .Include(o => o.Restaurant)
+                .OrderBy(o => o.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+            return new PagedResult<Order>
+            {
+                Items = items,
+                TotalItems = totalItems,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
         public async Task<Order> AddAsync(Order order)
         {
             _context.Orders.Add(order);

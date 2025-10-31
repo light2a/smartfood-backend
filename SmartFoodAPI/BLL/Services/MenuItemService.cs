@@ -38,6 +38,19 @@ namespace BLL.Services
             });
         }
 
+        public async Task<PagedResult<MenuItemDto>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
+        {
+            var pagedResult = await _repo.GetPagedAsync(pageNumber, pageSize, keyword);
+
+            return new PagedResult<MenuItemDto>
+            {
+                Items = pagedResult.Items.Select(ToDto),
+                TotalItems = pagedResult.TotalItems,
+                PageNumber = pagedResult.PageNumber,
+                PageSize = pagedResult.PageSize
+            };
+        }
+
         public async Task<MenuItemDto?> GetByIdAsync(int id)
         {
             var item = await _repo.GetByIdAsync(id);

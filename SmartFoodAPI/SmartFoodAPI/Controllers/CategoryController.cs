@@ -21,6 +21,13 @@ namespace SmartFoodAPI.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetAll() => Ok(await _service.GetAllAsync());
 
+        [HttpGet("paging")]
+        public async Task<IActionResult> GetPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? keyword = null)
+        {
+            var result = await _service.GetPagedAsync(pageNumber, pageSize, keyword);
+            return Ok(result);
+        }
+
         // GET: api/Category/5
         [HttpGet("{id:int}")]
         [AllowAnonymous]

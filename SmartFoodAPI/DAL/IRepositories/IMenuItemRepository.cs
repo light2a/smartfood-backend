@@ -10,6 +10,7 @@ namespace DAL.IRepositories
     public interface IMenuItemRepository
     {
         Task<IEnumerable<MenuItem>> GetAllAsync();
+        Task<PagedResult<MenuItem>> GetPagedAsync(int pageNumber, int pageSize, string? keyword);
         Task<MenuItem?> GetByIdAsync(int id);
         Task<MenuItem> AddAsync(MenuItem item);
         Task UpdateAsync(MenuItem item);

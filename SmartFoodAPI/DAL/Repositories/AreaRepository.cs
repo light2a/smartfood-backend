@@ -16,6 +16,30 @@ namespace DAL.Repositories
         public async Task<IEnumerable<Area>> GetAllAsync() =>
             await _context.Areas.AsNoTracking().ToListAsync();
 
+        public async Task<PagedResult<Area>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
+        {
+            var query = _context.Areas.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                query = query.Where(a => a.Name.Contains(keyword) ||
+                                         (a.City != null && a.City.Contains(keyword)));
+            }
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .OrderBy(a => a.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+            return new PagedResult<Area>
+            {
+                Items = items,
+                TotalItems = totalItems,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
         public async Task<Area?> GetByIdAsync(int id) =>
             await _context.Areas.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
 
