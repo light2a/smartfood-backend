@@ -12,6 +12,7 @@ namespace BLL.IServices
     public interface ICategoryService
     {
         Task<IEnumerable<CategoryDto>> GetAllAsync();
+        Task<PagedResult<CategoryDto>> GetPagedAsync(int pageNumber, int pageSize, string? keyword);
         Task<CategoryDto?> GetByIdAsync(int id);
         Task<CategoryDto> CreateAsync(CreateCategoryRequest request);
         Task UpdateAsync(int id, UpdateCategoryRequest request);

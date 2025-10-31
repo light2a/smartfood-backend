@@ -12,6 +12,7 @@ namespace BLL.IServices
     public interface IMenuItemService
     {
         Task<IEnumerable<MenuItemDto>> GetAllAsync();
+        Task<PagedResult<MenuItemDto>> GetPagedAsync(int pageNumber, int pageSize, string? keyword);
         Task<MenuItemDto?> GetByIdAsync(int id);
         Task<MenuItemDto> CreateAsync(CreateMenuItemRequest request, IFormFile? logo);
         Task UpdateAsync(int id, UpdateMenuItemRequest request, IFormFile? logo);

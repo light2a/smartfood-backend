@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using BLL.DTOs.Restaurant;
 using System;
 using System.Threading.Tasks;
+using BLL.Services;
 
 namespace SmartFoodAPI.Controllers
 {
@@ -24,6 +25,14 @@ namespace SmartFoodAPI.Controllers
             var list = await _service.GetAllAsync();
             return Ok(list);
         }
+
+        [HttpGet("paging")]
+        public async Task<IActionResult> GetPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? keyword = null)
+        {
+            var result = await _service.GetPagedAsync(pageNumber, pageSize, keyword);
+            return Ok(result);
+        }
+
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)

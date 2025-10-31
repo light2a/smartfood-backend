@@ -20,6 +20,40 @@ namespace BLL.Services
             _menuItemRepository = menuItemRepository;
         }
 
+        public async Task<PagedResult<OrderDetailDto>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
+        {
+            var pagedResult = await _orderRepository.GetPagedAsync(pageNumber, pageSize, keyword);
+            return new PagedResult<OrderDetailDto>
+            {
+                Items = pagedResult.Items.Select(o => new OrderDetailDto
+                {
+                    OrderId = o.Id,
+                    TotalAmount = o.TotalAmount,
+                    ShippingFee = o.ShippingFee,
+                    FinalAmount = o.FinalAmount,
+                    CreatedAt = o.CreatedAt,
+                    RestaurantName = o.Restaurant?.Name ?? "Unknown Restaurant",
+                    Items = o.OrderItems.Select(oi => new OrderItemDetailDto
+                    {
+                        MenuItemName = oi.MenuItem.Name,
+                        Quantity = oi.Qty,
+                        UnitPrice = oi.UnitPrice
+                    }).ToList(),
+                    StatusHistory = o.StatusHistory
+                        .OrderByDescending(s => s.CreatedAt)
+                        .Select(s => new OrderStatusHistoryDto
+                        {
+                            Status = s.Status,
+                            Note = s.Note,
+                            CreatedAt = s.CreatedAt
+                        }).ToList()
+                }),
+                TotalItems = pagedResult.TotalItems,
+                PageNumber = pagedResult.PageNumber,
+                PageSize = pagedResult.PageSize
+            };
+        }
+
         public async Task<CreateOrderResponse> CreateOrderAsync(int customerAccountId, CreateOrderRequest request)
         {
             if (request.Items == null || request.Items.Count == 0)

@@ -28,6 +28,30 @@ namespace DAL.Repositories
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
 
+        public async Task<PagedResult<Category>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
+        {
+            var query = _context.Categories.AsQueryable();
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                query = query.Where(c => c.Name.Contains(keyword) ||
+                                         (c.Description != null && c.Description.Contains(keyword)));
+            }
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .OrderBy(c => c.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+            return new PagedResult<Category>
+            {
+                Items = items,
+                TotalItems = totalItems,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
         public async Task<Category> AddAsync(Category category)
         {
             _context.Categories.Add(category);
