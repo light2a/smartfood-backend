@@ -9,6 +9,7 @@ namespace DAL.IRepositories
 {
     public interface IOrderRepository
     {
+        Task<PagedResult<Order>> GetPagedAsync(int pageNumber, int pageSize, string? keyword);
         Task<Order> AddAsync(Order order);
         Task<Order?> GetByIdAsync(int id);
         Task<Order?> GetDetailByIdAsync(int id);

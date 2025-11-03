@@ -32,6 +32,24 @@ namespace BLL.Services
             });
         }
 
+        public async Task<PagedResult<CategoryDto>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
+        {
+            var paged = await _repo.GetPagedAsync(pageNumber, pageSize, keyword);
+            return new PagedResult<CategoryDto>
+            {
+                Items = paged.Items.Select(c => new CategoryDto
+                {
+                    Id = c.Id,
+                    RestaurantId = c.RestaurantId,
+                    Name = c.Name,
+                    Description = c.Description
+                }),
+                TotalItems = paged.TotalItems,
+                PageNumber = paged.PageNumber,
+                PageSize = paged.PageSize
+            };
+        }
+
         public async Task<CategoryDto?> GetByIdAsync(int id)
         {
             var c = await _repo.GetByIdAsync(id);

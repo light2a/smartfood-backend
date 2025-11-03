@@ -109,7 +109,7 @@ namespace DAL.Models
                 entity.HasMany(r => r.Categories)
                     .WithOne(c => c.Restaurant)
                     .HasForeignKey(c => c.RestaurantId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // === MenuItem ===

@@ -21,7 +21,37 @@ namespace DAL.Repositories
 
         public async Task<IEnumerable<Restaurant>> GetAllAsync()
         {
-            return await _context.Restaurants.AsNoTracking().ToListAsync();
+            return await _context.Restaurants.Include(
+                r => r.Area)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        public async Task<PagedResult<Restaurant>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
+        {
+            var query = _context.Restaurants.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                query = query.Where(r => r.Name.Contains(keyword) ||
+                                         (r.Name != null && r.Name.Contains(keyword)));
+            }
+
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .OrderBy(r => r.Id)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return new PagedResult<Restaurant>
+            {
+                Items = items,
+                TotalItems = totalItems,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
         }
 
         public async Task<Restaurant?> GetByIdAsync(int id)

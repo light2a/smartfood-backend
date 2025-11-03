@@ -38,6 +38,8 @@ builder.Services.AddScoped<IAreaService, AreaService>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+//builder.Services.AddHttpClient<IImageService, ImgBBImageService>();
+
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 
