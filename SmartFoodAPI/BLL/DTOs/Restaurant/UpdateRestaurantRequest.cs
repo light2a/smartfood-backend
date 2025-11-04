@@ -9,7 +9,6 @@ namespace BLL.DTOs.Restaurant
         public int SellerId { get; set; }
 
         public int? AreaId { get; set; }
-        [Required]
         public List<int>? CategoryIds { get; set; }
 
         [Required, MaxLength(250)]

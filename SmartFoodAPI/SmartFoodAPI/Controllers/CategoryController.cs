@@ -37,6 +37,14 @@ namespace SmartFoodAPI.Controllers
             if (category == null) return NotFound();
             return Ok(category);
         }
+        [HttpGet("{restaurantId:int}/restaurant")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetByRestaurant(int restaurantId)
+        {
+            var category = await _service.GetByRestaurantAsync(restaurantId);
+            if (category == null) return NotFound();
+            return Ok(category);
+        }
 
         // POST: api/Category
         [HttpPost]
