@@ -64,6 +64,19 @@ namespace BLL.Services
             };
         }
 
+        //public async Task<CategoryDto?> GetByRestaurantAsync(int restaurantId)
+        //{
+        //    var c = await _repo.GetByRestaurantAsync(restaurantId);
+        //    if (c == null) return null;
+        //    return new CategoryDto
+        //    {
+        //        Id = c.Id,
+        //        RestaurantId = c.RestaurantId,
+        //        Name = c.Name,
+        //        Description = c.Description
+        //    };
+        //}
+
         public async Task<CategoryDto> CreateAsync(CreateCategoryRequest request)
         {
             var category = new Category

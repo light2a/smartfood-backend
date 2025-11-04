@@ -12,6 +12,7 @@ namespace DAL.IRepositories
         Task<IEnumerable<Category>> GetAllAsync();
         Task<PagedResult<Category>> GetPagedAsync(int pageNumber, int pageSize, string? keyword);
         Task<Category?> GetByIdAsync(int id);
+        Task<Category?> GetByRestaurantAsync(int restaurantId);
         Task<Category> AddAsync(Category category);
         Task UpdateAsync(Category category);
         Task DeleteAsync(int id);
