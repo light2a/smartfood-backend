@@ -12,5 +12,7 @@ namespace BLL.IServices
         Task<IEnumerable<Seller>> GetAllSellersAsync();
         Task<Seller?> GetSellerByIdAsync(int id);
         Task ApproveSellerAsync(int sellerId);
+        Task<string> GenerateStripeOnboardingLinkAsync(int sellerId);
+        Task MarkStripeOnboardingCompletedAsync(string stripeAccountId);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using BLL.IServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SmartFoodAPI.Controllers
@@ -21,6 +22,28 @@ namespace SmartFoodAPI.Controllers
             {
                 await _sellerService.ApproveSellerAsync(sellerId);
                 return Ok(new { message = "✅ Seller approved successfully and account activated." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [Authorize(Roles = "Seller")]
+        [HttpGet("stripe/onboarding-link")]
+        public async Task<IActionResult> GetStripeOnboardingLink()
+        {
+            try
+            {
+                // ✅ Extract SellerId from JWT token
+                var sellerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "SellerId");
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Seller ID not found in token." });
+
+                int sellerId = int.Parse(sellerIdClaim.Value);
+
+                var onboardingUrl = await _sellerService.GenerateStripeOnboardingLinkAsync(sellerId);
+                return Ok(new { url = onboardingUrl });
             }
             catch (Exception ex)
             {

@@ -40,6 +40,8 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 //builder.Services.AddHttpClient<IImageService, ImgBBImageService>();
 
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
 
 builder.Services.AddSwaggerGen(c =>
 {

@@ -78,6 +78,15 @@ namespace DAL.Repositories
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
         }
+        public async Task<List<Order>> GetAllOrdersWithItemsAsync()
+        {
+            return await _context.Orders
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.MenuItem)
+                        .ThenInclude(mi => mi.Category)
+                .Include(o => o.StatusHistory)
+                .ToListAsync();
+        }
 
     }
 }

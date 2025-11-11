@@ -68,6 +68,12 @@ namespace DAL.Repositories
 
             await _context.SaveChangesAsync();
         }
+        public async Task<Seller?> GetByStripeAccountIdAsync(string stripeAccountId)
+        {
+            return await _context.Sellers
+                .Include(s => s.User)
+                .FirstOrDefaultAsync(s => s.StripeAccountId == stripeAccountId);
+        }
 
     }
 }
