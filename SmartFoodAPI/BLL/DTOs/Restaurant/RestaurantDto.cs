@@ -6,6 +6,7 @@ namespace BLL.DTOs.Restaurant
     {
         public int Id { get; set; }
         public int SellerId { get; set; }
+        public string? SellerName { get; set; }
         public int? AreaId { get; set; }
         public string? AreaName { get; set; }
         public int? CategoryId { get; set; }

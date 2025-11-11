@@ -29,20 +29,27 @@ namespace DAL.Repositories
 
         public async Task<PagedResult<Restaurant>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
         {
-            var query = _context.Restaurants.AsQueryable();
+            var query = _context.Restaurants
+                .Include(r => r.Seller) // load Seller
+                .Include(r => r.Area)   // load Area
+                .AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
-                query = query.Where(r => r.Name.Contains(keyword) ||
-                                         (r.Name != null && r.Name.Contains(keyword)));
+                query = query.Where(r =>
+                    r.Name.Contains(keyword) ||
+                    (r.Address != null && r.Address.Contains(keyword)) ||
+                    (r.Seller != null && r.Seller.DisplayName.Contains(keyword)) ||
+                    (r.Area != null && r.Area.Name.Contains(keyword))
+                );
             }
 
             var totalItems = await query.CountAsync();
+
             var items = await query
                 .OrderBy(r => r.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .AsNoTracking()
                 .ToListAsync();
 
             return new PagedResult<Restaurant>
@@ -111,6 +118,7 @@ namespace DAL.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
+        
     }
 }
 
