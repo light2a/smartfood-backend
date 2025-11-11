@@ -14,6 +14,10 @@ namespace DAL.Repositories
             _context = context;
         }
 
+        public IQueryable<Account> GetAll()
+        {
+            return _context.Accounts.Include(a => a.Role);
+        }
         public async Task<Account?> GetByEmailAsync(string email)
         {
             return await _context.Accounts
@@ -70,5 +74,41 @@ namespace DAL.Repositories
             return account;
         }
 
+        public async Task BanAccountAsync(int accountId, bool isBanned)
+        {
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == accountId);
+            if (account == null)
+                throw new Exception("Account not found.");
+
+            account.IsBanned = isBanned;
+            account.UpdateAt = DateTime.UtcNow;
+
+            _context.Accounts.Update(account);
+            await _context.SaveChangesAsync();
+        }
+        public async Task<PagedResult<Account>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
+        {
+            var query = _context.Accounts.Include(a => a.Role).AsQueryable();
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                query = query.Where(a => a.Email.Contains(keyword) ||
+                                         a.FullName.Contains(keyword) ||
+                                         (a.PhoneNumber != null && a.PhoneNumber.Contains(keyword)));
+            }
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .OrderBy(a => a.AccountId)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+            return new PagedResult<Account>
+            {
+                Items = items,
+                TotalItems = totalItems,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
     }
 }

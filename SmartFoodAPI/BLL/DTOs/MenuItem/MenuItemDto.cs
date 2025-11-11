@@ -11,7 +11,9 @@ namespace BLL.DTOs.MenuItem
     {
         public int Id { get; set; }
         public int RestaurantId { get; set; }
+        public string? RestaurantName { get; set; }
         public int CategoryId { get; set; }
+        public string? CategoryName { get; set; }
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
         public decimal Price { get; set; }

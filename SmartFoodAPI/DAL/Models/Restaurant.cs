@@ -19,7 +19,7 @@ namespace DAL.Models
         public string? Hotline { get; set; }    
         public bool IsActive { get; set; } = true;
         public string? LogoUrl { get; set; }
-        public virtual Seller Seller { get; set; }
+        public virtual Seller? Seller { get; set; }
         public virtual Area? Area { get; set; }
         public virtual ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();

@@ -4,24 +4,26 @@ using BLL.IServices;
 using BLL.DTOs.Order;
 using System.Threading.Tasks;
 using System.Linq;
+using BLL.Services;
 
 namespace SmartFoodAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
+        private readonly IAuthService _authService;
         private readonly IOrderService _orderService;
         private readonly ILogger<AdminController> _logger;
 
-        public AdminController(IOrderService orderService, ILogger<AdminController> logger)
+        public AdminController(IOrderService orderService, ILogger<AdminController> logger, IAuthService authService)
         {
             _orderService = orderService;
             _logger = logger;
+            _authService = authService;
         }
 
-        // ✅ Get paginated orders
         [HttpGet("orders")]
         public async Task<IActionResult> GetOrders(
             [FromQuery] int pageNumber = 1,
@@ -32,7 +34,6 @@ namespace SmartFoodAPI.Controllers
             return Ok(result);
         }
 
-        // ✅ Get details for one order
         [HttpGet("orders/{id}")]
         public async Task<IActionResult> GetOrderDetail(int id)
         {
@@ -64,7 +65,7 @@ namespace SmartFoodAPI.Controllers
             }
         }
 
-        // ✅ Cancel order
+        // Cancel order
         [HttpDelete("orders/{id}")]
         public async Task<IActionResult> DeleteOrder(int id)
         {
@@ -169,6 +170,85 @@ namespace SmartFoodAPI.Controllers
             return Ok(data);
         }
 
+        [HttpPut("ban/{id}")]
+        public async Task<IActionResult> BanAccount(int id, [FromQuery] bool isBanned)
+        {
+            try
+            {
+                await _authService.BanAccountAsync(id, isBanned);
+                return Ok(new
+                {
+                    Message = isBanned ? "Account has been banned!" : "Account has been unbanned!"
+                });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { error = "Account not found." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+        [HttpGet("accounts")]
+        public async Task<IActionResult> GetAllAccounts()
+        {
+            var accounts = _authService.GetAll().Select(a => new
+            {
+                a.AccountId,
+                a.FullName,
+                a.Email,
+                a.PhoneNumber,
+                Role = a.Role.RoleName,
+                a.IsActive,
+                a.IsBanned,
+                a.CreatedAt,
+                a.UpdateAt
+            }).ToList();
+            return Ok(accounts);
+        }
+        [HttpGet("accounts/paged")]
+        public async Task<IActionResult> GetPagedAccounts(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 2,
+            [FromQuery] string? keyword = null)
+        {
+            var query = _authService.GetAll();
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                query = query.Where(a =>
+                    a.FullName.Contains(keyword) ||
+                    a.Email.Contains(keyword) ||
+                    a.PhoneNumber.Contains(keyword) ||
+                    a.Role.RoleName.Contains(keyword));
+            }
+            var totalItems = query.Count();
+            var items = query
+                .OrderBy(a => a.AccountId)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(a => new
+                {
+                    a.AccountId,
+                    a.FullName,
+                    a.Email,
+                    a.PhoneNumber,
+                    Role = a.Role.RoleName,
+                    a.IsActive,
+                    a.IsBanned,
+                    a.CreatedAt,
+                    a.UpdateAt
+                })
+                .ToList();
+            var result = new
+            {
+                Items = items,
+                TotalItems = totalItems,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+            return Ok(result);
+        }
     }
 
     // ✅ DTO for updating order status

@@ -17,7 +17,7 @@ public class AnhMoeImageService : IImageService
     public AnhMoeImageService(HttpClient httpClient, IConfiguration configuration)
     {
         _httpClient = httpClient;
-        _apiKey = configuration["AnhMoe:ApiKey"]!; // đọc từ appsettings.json
+        _apiKey = configuration["AnhMoe:ApiKey"]!; 
     }
 
     public async Task<string> UploadAsync(IFormFile file)
