@@ -171,14 +171,14 @@ namespace SmartFoodAPI.Controllers
         }
 
         [HttpPut("ban/{id}")]
-        public async Task<IActionResult> BanAccount(int id, [FromQuery] bool isBanned)
+        public async Task<IActionResult> BanAccount(int id, [FromQuery] bool isActive)
         {
             try
             {
-                await _authService.BanAccountAsync(id, isBanned);
+                await _authService.BanAccountAsync(id, isActive);
                 return Ok(new
                 {
-                    Message = isBanned ? "Account has been banned!" : "Account has been unbanned!"
+                    Message = isActive ? "Account has been unbanned!" : "Account has been banned!"
                 });
             }
             catch (KeyNotFoundException)
@@ -201,7 +201,6 @@ namespace SmartFoodAPI.Controllers
                 a.PhoneNumber,
                 Role = a.Role.RoleName,
                 a.IsActive,
-                a.IsBanned,
                 a.CreatedAt,
                 a.UpdateAt
             }).ToList();
@@ -235,7 +234,6 @@ namespace SmartFoodAPI.Controllers
                     a.PhoneNumber,
                     Role = a.Role.RoleName,
                     a.IsActive,
-                    a.IsBanned,
                     a.CreatedAt,
                     a.UpdateAt
                 })

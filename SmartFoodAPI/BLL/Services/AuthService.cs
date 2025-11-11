@@ -33,9 +33,10 @@ namespace BLL.Services
         {
             var account = await _accountRepository.GetByEmailAsync(email);
             
-            if (account == null || !BCrypt.Net.BCrypt.Verify(password, account.Password) || account.IsActive == false)
+            if (account == null || !BCrypt.Net.BCrypt.Verify(password, account.Password))
                 return null;
-            if (account.IsBanned == true)
+
+            if (account.IsActive == false)
             {
                 throw new Exception("Tài khoản của bạn đã bị cấm.");
             }

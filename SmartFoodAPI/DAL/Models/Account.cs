@@ -18,7 +18,6 @@ namespace DAL.Models
         public string Password { get; set; }
 
         public bool? IsActive { get; set; }
-        public bool? IsBanned { get; set; }
 
         public DateTime? CreatedAt { get; set; }
 

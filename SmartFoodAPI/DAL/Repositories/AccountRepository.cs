@@ -80,7 +80,7 @@ namespace DAL.Repositories
             if (account == null)
                 throw new Exception("Account not found.");
 
-            account.IsBanned = isBanned;
+            account.IsActive = isBanned;
             account.UpdateAt = DateTime.UtcNow;
 
             _context.Accounts.Update(account);
