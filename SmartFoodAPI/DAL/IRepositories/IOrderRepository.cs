@@ -15,6 +15,7 @@ namespace DAL.IRepositories
         Task<Order?> GetDetailByIdAsync(int id);
         Task UpdateAsync(Order order);
         Task<IEnumerable<Order>> GetOrdersByCustomerIdAsync(int customerAccountId);
+        Task<List<Order>> GetAllOrdersWithItemsAsync();
 
     }
 }

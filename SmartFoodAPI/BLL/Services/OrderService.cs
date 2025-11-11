@@ -231,6 +231,36 @@ namespace BLL.Services
 
             return true;
         }
+        public async Task<IEnumerable<CategoryPopularityDto>> GetCategoryPopularityAsync(DateTime? from = null, DateTime? to = null)
+        {
+            var orders = await _orderRepository.GetAllOrdersWithItemsAsync(); // include items + category
+
+            // Filter by date range
+            if (from.HasValue)
+                orders = orders.Where(o => o.CreatedAt.Date >= from.Value.Date).ToList();
+            if (to.HasValue)
+                orders = orders.Where(o => o.CreatedAt.Date <= to.Value.Date).ToList();
+
+            // Flatten all order items with categories
+            var allItems = orders
+                .SelectMany(o => o.OrderItems) // OrderItems includes MenuItem -> Category
+                .Where(oi => oi.MenuItem != null && oi.MenuItem.Category != null);
+
+            // Group by category
+            var grouped = allItems
+                .GroupBy(oi => oi.MenuItem.Category.Name)
+                .Select(g => new CategoryPopularityDto
+                {
+                    Category = g.Key,
+                    OrdersCount = g.Count(),
+                    Revenue = g.Sum(oi => oi.UnitPrice * oi.Qty) // use correct properties
+                })
+                .OrderByDescending(g => g.OrdersCount)
+                .ToList();
+
+
+            return grouped;
+        }
 
     }
 }

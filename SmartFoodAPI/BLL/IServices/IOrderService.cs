@@ -16,6 +16,7 @@ namespace BLL.IServices
         Task<OrderDetailDto> GetOrderDetailAsync(int customerAccountId, int orderId);
         Task<IEnumerable<OrderSummaryDto>> GetOrdersByCustomerAsync(int customerAccountId);
         Task<bool> CancelOrderAsync(int customerAccountId, int orderId);
+        Task<IEnumerable<CategoryPopularityDto>> GetCategoryPopularityAsync(DateTime? from = null, DateTime? to = null);
 
     }
 }
