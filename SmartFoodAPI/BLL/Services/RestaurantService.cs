@@ -132,8 +132,8 @@ namespace BLL.Services
             CloseTime = r.CloseTime,
             Hotline = r.Hotline,
             LogoUrl = r.LogoUrl,
-            SellerName = r.Seller?.DisplayName,
-            AreaName = r.Area?.Name,
+            SellerName = r.Seller?.DisplayName ?? "(Không có người bán)",
+            AreaName = r.Area?.Name ?? "(Không có khu vực)"
         };
         public async Task<IEnumerable<RestaurantDto>> SearchAsync(string? keyword)
         {
