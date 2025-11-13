@@ -29,8 +29,15 @@ namespace SmartFoodAPI.Controllers
         [HttpGet("paging")]
         public async Task<IActionResult> GetPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? keyword = null)
         {
-            var result = await _service.GetPagedAsync(pageNumber, pageSize, keyword);
-            return Ok(result);
+            try
+            {
+                var result = await _service.GetPagedAsync(pageNumber, pageSize, keyword);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "Internal Server Error", Detail = ex.Message });
+            }
         }
 
 

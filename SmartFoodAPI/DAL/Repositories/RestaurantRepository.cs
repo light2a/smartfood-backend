@@ -32,17 +32,19 @@ namespace DAL.Repositories
             var query = _context.Restaurants
                 .Include(r => r.Seller) // load Seller
                 .Include(r => r.Area)   // load Area
+                .AsSplitQuery()
                 .AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 query = query.Where(r =>
-                    r.Name.Contains(keyword) ||
-                    (r.Address != null && r.Address.Contains(keyword)) ||
-                    (r.Seller != null && r.Seller.DisplayName.Contains(keyword)) ||
-                    (r.Area != null && r.Area.Name.Contains(keyword))
+                    (r.Name ?? "").Contains(keyword) ||
+                    (r.Address ?? "").Contains(keyword) ||
+                    ((r.Seller != null ? r.Seller.DisplayName : "") ?? "").Contains(keyword) ||
+                    ((r.Area != null ? r.Area.Name : "") ?? "").Contains(keyword)
                 );
             }
+
 
             var totalItems = await query.CountAsync();
 

@@ -9,7 +9,6 @@ namespace BLL.DTOs.Restaurant
         public string? SellerName { get; set; }
         public int? AreaId { get; set; }
         public string? AreaName { get; set; }
-        public int? CategoryId { get; set; }
         public string Name { get; set; } = null!;
         public string? Address { get; set; }
         public string? Coordinate { get; set; }
