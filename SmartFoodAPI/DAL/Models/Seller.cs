@@ -17,7 +17,7 @@ namespace DAL.Models
 
         // NEW:
         public string? StripeAccountId { get; set; }
-        public bool IsStripeOnboardingCompleted { get; set; } = false;
+        public bool? IsStripeOnboardingCompleted { get; set; } = false;
 
         public virtual Account User { get; set; }
         public virtual ICollection<Restaurant> Restaurants { get; set; } = new List<Restaurant>();
