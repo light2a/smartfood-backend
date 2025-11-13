@@ -261,6 +261,101 @@ namespace BLL.Services
 
             return grouped;
         }
+        public async Task<PagedResult<OrderDetailDto>> GetPagedBySellerAsync(int sellerId, int pageNumber, int pageSize, string? keyword)
+        {
+            var pagedOrders = await _orderRepository.GetPagedBySellerAsync(sellerId, pageNumber, pageSize, keyword);
+
+            return new PagedResult<OrderDetailDto>
+            {
+                Items = pagedOrders.Items.Select(o => new OrderDetailDto
+                {
+                    OrderId = o.Id,
+                    TotalAmount = o.TotalAmount,
+                    FinalAmount = o.FinalAmount,
+                    CreatedAt = o.CreatedAt,
+                    RestaurantName = o.Restaurant?.Name,
+                    Items = o.OrderItems.Select(i => new OrderItemDetailDto
+                    {
+                        MenuItemName = i.MenuItem.Name,
+                        Quantity = i.Qty,
+                        UnitPrice = i.UnitPrice
+                    }).ToList(),
+                    StatusHistory = o.StatusHistory
+                        .OrderByDescending(s => s.CreatedAt)
+                        .Select(s => new OrderStatusHistoryDto
+                        {
+                            Status = s.Status,
+                            Note = s.Note,
+                            CreatedAt = s.CreatedAt
+                        }).ToList()
+                }).ToList(),
+                TotalItems = pagedOrders.TotalItems,
+                PageNumber = pagedOrders.PageNumber,
+                PageSize = pagedOrders.PageSize
+            };
+        }
+
+        public async Task<OrderDetailDto> GetOrderDetailBySellerAsync(int sellerId, int orderId)
+        {
+            var order = await _orderRepository.GetDetailByIdAsync(orderId);
+            if (order == null)
+                throw new Exception("Order not found.");
+
+            if (order.Restaurant?.SellerId != sellerId)
+                throw new Exception("Unauthorized: Order does not belong to your restaurant.");
+
+            return new OrderDetailDto
+            {
+                OrderId = order.Id,
+                TotalAmount = order.TotalAmount,
+                FinalAmount = order.FinalAmount,
+                CreatedAt = order.CreatedAt,
+                RestaurantName = order.Restaurant?.Name ?? "Unknown Restaurant",
+                Items = order.OrderItems.Select(i => new OrderItemDetailDto
+                {
+                    MenuItemName = i.MenuItem.Name,
+                    Quantity = i.Qty,
+                    UnitPrice = i.UnitPrice
+                }).ToList(),
+                StatusHistory = order.StatusHistory
+                    .OrderByDescending(s => s.CreatedAt)
+                    .Select(s => new OrderStatusHistoryDto
+                    {
+                        Status = s.Status,
+                        Note = s.Note,
+                        CreatedAt = s.CreatedAt
+                    }).ToList()
+            };
+        }
+
+        public async Task<bool> UpdateOrderStatusBySellerAsync(int sellerId, int orderId, string newStatus, string? note)
+        {
+            var order = await _orderRepository.GetDetailByIdAsync(orderId);
+            if (order == null)
+                throw new Exception("Order not found.");
+
+            if (order.Restaurant?.SellerId != sellerId)
+                throw new Exception("Unauthorized: Order does not belong to your restaurant.");
+
+            var allowedStatuses = new[] { "Created", "Preparing", "Shipping", "Completed" };
+            if (!allowedStatuses.Contains(newStatus))
+                throw new Exception("Invalid status transition.");
+
+            var latest = order.StatusHistory.OrderByDescending(s => s.CreatedAt).FirstOrDefault()?.Status;
+            if (latest == "Completed" || latest == "Cancelled")
+                throw new Exception("Cannot change status of a completed/cancelled order.");
+
+            var newHistory = new OrderStatusHistory
+            {
+                OrderId = order.Id,
+                Status = newStatus,
+                Note = note ?? $"Order status updated to {newStatus} by seller."
+            };
+
+            order.StatusHistory.Add(newHistory);
+            await _orderRepository.UpdateAsync(order);
+            return true;
+        }
 
     }
 }
