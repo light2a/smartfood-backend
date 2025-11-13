@@ -12,6 +12,8 @@ using BLL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Stripe;
+using Stripe.FinancialConnections;
+using SmartFoodAPI.Common;
 
 namespace SmartFoodAPI.Controllers
 {
@@ -35,11 +37,21 @@ namespace SmartFoodAPI.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] DTOs.Auth.LoginRequest request)
         {
-            var token = await _authService.LoginAsync(request.Email, request.Password);
-            if (token == null)
-                return Unauthorized(new { message = "Invalid credentials or inactive account." });
+            try
+            {
+                var token = await _authService.LoginAsync(request.Email, request.Password);
+                if (token == null)
+                    return Unauthorized(new { message = "Email hoặc mật khẩu không đúng." });
 
-            return Ok(new LoginResponse { Token = token });
+                return Ok(new { token });
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("cấm"))
+                    return BadRequest(new { message = ex.Message });
+
+                return StatusCode(500, ErrorResponse.FromStatus(500, $"Server error: {ex.Message}"));
+            }
         }
 
         [HttpPost("register")]
@@ -484,6 +496,8 @@ namespace SmartFoodAPI.Controllers
             _logger.LogInformation("[GoogleOAuth] Redirecting to: {RedirectUrl}", redirectUrl);
             return Redirect(redirectUrl);
         }
+
+        
 
         //[HttpPost("connect")]
         //[Authorize(Roles = "Seller")]

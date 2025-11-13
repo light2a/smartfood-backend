@@ -10,7 +10,7 @@ namespace DAL.Models
     {
         public int Id { get; set; }
         public int UserAccountId { get; set; }
-        public string DisplayName { get; set; } = null!;
+        public string? DisplayName { get; set; }
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public SellerStatus Status { get; set; } = SellerStatus.Unavailable;
