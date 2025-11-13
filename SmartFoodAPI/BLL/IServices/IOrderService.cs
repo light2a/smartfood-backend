@@ -18,5 +18,9 @@ namespace BLL.IServices
         Task<bool> CancelOrderAsync(int customerAccountId, int orderId);
         Task<IEnumerable<CategoryPopularityDto>> GetCategoryPopularityAsync(DateTime? from = null, DateTime? to = null);
 
+        Task<PagedResult<OrderDetailDto>> GetPagedBySellerAsync(int sellerId, int pageNumber, int pageSize, string? keyword);
+        Task<OrderDetailDto> GetOrderDetailBySellerAsync(int sellerId, int orderId);
+        Task<bool> UpdateOrderStatusBySellerAsync(int sellerId, int orderId, string newStatus, string? note);
+
     }
 }

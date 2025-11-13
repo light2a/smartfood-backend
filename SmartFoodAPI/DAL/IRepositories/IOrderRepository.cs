@@ -17,5 +17,7 @@ namespace DAL.IRepositories
         Task<IEnumerable<Order>> GetOrdersByCustomerIdAsync(int customerAccountId);
         Task<List<Order>> GetAllOrdersWithItemsAsync();
 
+        Task<PagedResult<Order>> GetPagedBySellerAsync(int sellerId, int pageNumber, int pageSize, string? keyword);
+
     }
 }

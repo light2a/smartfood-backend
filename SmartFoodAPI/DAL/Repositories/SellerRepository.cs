@@ -75,5 +75,37 @@ namespace DAL.Repositories
                 .FirstOrDefaultAsync(s => s.StripeAccountId == stripeAccountId);
         }
 
+        public async Task<PagedResult<Order>> GetPagedBySellerAsync(int sellerId, int pageNumber, int pageSize, string? keyword)
+        {
+            var query = _context.Orders
+                .Include(o => o.Restaurant)
+                .Include(o => o.StatusHistory)
+                .Where(o => o.Restaurant.SellerId == sellerId);
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                query = query.Where(o =>
+                    o.Customer.FullName.Contains(keyword) ||
+                    o.Restaurant.Name.Contains(keyword));
+            }
+
+            var totalItems = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(o => o.CreatedAt)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return new PagedResult<Order>
+            {
+                Items = items,
+                TotalItems = totalItems,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
+
     }
 }
