@@ -52,6 +52,13 @@ namespace DAL.Repositories
             };
         }
 
+        public async Task<Category?> GetByRestaurantAsync(int restaurantId)
+        {
+            return await _context.Categories
+                .Include(c => c.Restaurant)
+                .FirstOrDefaultAsync(c => c.RestaurantId == restaurantId);
+        }
+
         public async Task<Category> AddAsync(Category category)
         {
             _context.Categories.Add(category);

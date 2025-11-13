@@ -32,9 +32,14 @@ namespace BLL.Services
         public async Task<string?> LoginAsync(string email, string password)
         {
             var account = await _accountRepository.GetByEmailAsync(email);
-            if (account == null || !BCrypt.Net.BCrypt.Verify(password, account.Password) || account.IsActive == false)
+            
+            if (account == null || !BCrypt.Net.BCrypt.Verify(password, account.Password))
                 return null;
 
+            if (account.IsActive == false)
+            {
+                throw new Exception("Tài khoản của bạn đã bị cấm.");
+            }
             return await GenerateJwtTokenAsync(account);
         }
 
@@ -266,5 +271,13 @@ namespace BLL.Services
             return await _accountRepository.UpdateAsync(account);
         }
 
+        public async Task BanAccountAsync(int accountId, bool isBanned)
+        {
+            await _accountRepository.BanAccountAsync(accountId, isBanned);
+        }
+        public IQueryable<Account> GetAll()
+        {
+            return _accountRepository.GetAll();
+        }
     }
 }

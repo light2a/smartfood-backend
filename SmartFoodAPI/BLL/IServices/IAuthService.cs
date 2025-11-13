@@ -1,4 +1,5 @@
-﻿using DAL.Models;
+﻿using BLL.DTOs.Area;
+using DAL.Models;
 using System;
 using System.Threading.Tasks;
 
@@ -6,6 +7,7 @@ namespace BLL.IServices
 {
     public interface IAuthService
     {
+        //Task<PagedResult<AreaDto>> GetPagedAsync(int pageNumber, int pageSize, string keyword);
         Task<string?> LoginAsync(string email, string password);
         Task<Account> RegisterAsync(string fullName, string email, string password, string phoneNumber);
         Task<Account> RegisterSellerAsync(string fullName, string email, string password, string phoneNumber);
@@ -26,5 +28,7 @@ namespace BLL.IServices
         Task<OtpInfo> GetCurrentOtpAsync(string email);
         Task<Account> UpdateAccountAsync(int accountId, string fullName, string phoneNumber);
         Task<Account> DeactivateAccountAsync(int accountId);
+        Task BanAccountAsync(int accountId, bool isBanned);
+        IQueryable<Account> GetAll();
     }
 }

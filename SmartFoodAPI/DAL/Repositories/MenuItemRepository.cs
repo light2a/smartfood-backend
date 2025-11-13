@@ -23,7 +23,10 @@ namespace DAL.Repositories
 
         public async Task<PagedResult<MenuItem>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
         {
-            var query = _context.MenuItems.AsQueryable();
+            var query = _context.MenuItems
+                .Include(r => r.Category)
+                .Include(r => r.Restaurant)
+                .AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
@@ -36,7 +39,6 @@ namespace DAL.Repositories
                 .OrderBy(r => r.Id)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .AsNoTracking()
                 .ToListAsync();
 
             return new PagedResult<MenuItem>

@@ -166,7 +166,9 @@ namespace BLL.Services
             Description = m.Description,
             Price = m.Price,
             Status = m.Status,
-            LogoUrl = m.LogoUrl
+            LogoUrl = m.LogoUrl,
+            RestaurantName = m.Restaurant?.Name,
+            CategoryName = m.Category?.Name
         };
     }
 }
