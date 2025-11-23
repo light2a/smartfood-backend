@@ -18,7 +18,7 @@ COPY ["SmartFoodAPI/DAL/DAL.csproj", "DAL/"]
 RUN dotnet restore "./SmartFoodAPI/SmartFoodAPI.csproj"
 COPY . .
 WORKDIR "/src/SmartFoodAPI"
-RUN dotnet build "./SmartFoodAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./SmartFoodAPI.csproj" -c $BUILD_CONFIGURATION -o /src/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
@@ -28,5 +28,5 @@ RUN dotnet publish "./SmartFoodAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publi
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=publish /src/publish /app
 ENTRYPOINT ["dotnet", "SmartFoodAPI.dll"]
