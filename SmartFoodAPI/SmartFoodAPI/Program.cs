@@ -223,11 +223,11 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Configure pipeline
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "SmartFoodAPI v1");
+});
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
