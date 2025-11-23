@@ -12,7 +12,7 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["SmartFoodAPI/SmartFoodAPI.csproj", "SmartFoodAPI/"]
+COPY ["SmartFoodAPI/SmartFoodAPI/SmartFoodAPI.csproj", "SmartFoodAPI/"]
 COPY ["SmartFoodAPI/BLL/BLL.csproj", "BLL/"]
 COPY ["SmartFoodAPI/DAL/DAL.csproj", "DAL/"]
 RUN dotnet restore "./SmartFoodAPI/SmartFoodAPI.csproj"
