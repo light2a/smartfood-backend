@@ -11,6 +11,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace BLL.Services
 {
@@ -20,13 +21,15 @@ namespace BLL.Services
         private readonly ISellerRepository _sellerRepository;
         private readonly IConfiguration _configuration;
         private readonly IDistributedCache _cache;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(IAccountRepository accountRepository, ISellerRepository sellerRepository, IConfiguration configuration, IDistributedCache cache)
+        public AuthService(IAccountRepository accountRepository, ISellerRepository sellerRepository, IConfiguration configuration, IDistributedCache cache, ILogger<AuthService> logger)
         {
             _accountRepository = accountRepository;
             _sellerRepository = sellerRepository;
             _configuration = configuration;
             _cache = cache;
+            _logger = logger;
         }
 
         public async Task<string?> LoginAsync(string email, string password)
@@ -186,7 +189,7 @@ namespace BLL.Services
                 Email = email,
                 FullName = fullName,
                 Password = string.Empty,
-                IsActive = false,
+                IsActive = true,
                 RoleId = 1,
                 ExternalProvider = provider,
                 ExternalProviderKey = providerKey,
@@ -199,6 +202,12 @@ namespace BLL.Services
 
         public async Task<string> GenerateJwtTokenAsync(Account account)
         {
+            _logger.LogInformation("Generating JWT for Account ID: {AccountId}, Email: {Email}", account.AccountId, account.Email);
+            if (account.AccountId == 0)
+            {
+                _logger.LogError("AccountId is 0 during token generation for email {Email}. This will result in a missing 'sub' claim.", account.Email);
+            }
+
             int? sellerId = null;
             if (account.Role?.RoleName?.Equals("Seller", StringComparison.OrdinalIgnoreCase) == true)
             {
@@ -223,7 +232,7 @@ namespace BLL.Services
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
+                expires: DateTime.UtcNow.AddDays(14),
                 signingCredentials: creds
             );
 

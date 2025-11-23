@@ -1,12 +1,12 @@
-﻿using Stripe;
+﻿using BLL.DTOs.Payment;
 using System.Threading.Tasks;
 
 namespace BLL.IServices
 {
     public interface IPaymentService
     {
-        Task<string> CreatePaymentIntentAsync(int orderId);
-        Task<bool> ConfirmPaymentAsync(string paymentIntentId);
-        Task HandleStripePaymentSucceededAsync(PaymentIntent intent);
+        Task<string> CreatePayOsOrderAsync(int orderId);
+        Task<bool> HandleCallbackAsync(PayOsWebhookDto callback);
+        bool VerifySignature(PayOsWebhookDto callback);
     }
 }

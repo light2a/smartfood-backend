@@ -1,10 +1,13 @@
-﻿using BLL.DTOs.Order;
+using BLL.DTOs.Order;
 using BLL.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SmartFoodAPI.Controllers
@@ -15,28 +18,13 @@ namespace SmartFoodAPI.Controllers
     public class OrderController : ControllerBase
     {
         private readonly IOrderService _orderService;
+        private readonly ILogger<OrderController> _logger;
 
-        public OrderController(IOrderService orderService)
+        public OrderController(IOrderService orderService, ILogger<OrderController> logger)
         {
             _orderService = orderService;
+            _logger = logger;
         }
-
-        /// <summary>
-        /// Create a new order with multiple menu items and order type (Pickup or Delivery).
-        /// </summary>
-        /// <remarks>
-        /// Example JSON request:
-        /// 
-        ///     POST /api/order/create
-        ///     {
-        ///       "orderType": "Delivery",
-        ///       "items": [
-        ///         { "menuItemId": 1, "quantity": 2 },
-        ///         { "menuItemId": 3, "quantity": 1 }
-        ///       ]
-        ///     }
-        /// </remarks>
-        /// 
 
         [HttpGet("paging")]
         public async Task<IActionResult> GetPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? keyword = null)
@@ -45,27 +33,62 @@ namespace SmartFoodAPI.Controllers
             return Ok(result);
         }
 
+        // 🚀 Updated endpoint with PayOS support
         [HttpPost("create")]
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
         {
+            _logger.LogInformation("CreateOrder endpoint called with request: {Request}", JsonSerializer.Serialize(request));
+            
+            // Log all claims in the User object
+            if (User.Claims.Any())
+            {
+                _logger.LogInformation("Claims found in User object:");
+                foreach (var claim in User.Claims)
+                {
+                    _logger.LogInformation("  Claim Type: {ClaimType}, Claim Value: {ClaimValue}", claim.Type, claim.Value);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("No claims found in User object.");
+            }
+
             try
             {
                 if (request == null || request.Items == null || !request.Items.Any())
+                {
+                    _logger.LogWarning("CreateOrder failed: Request body is null or contains no items.");
                     return BadRequest(new { error = "Order must contain at least one item." });
+                }
 
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                                       throw new Exception("Invalid token."));
+                _logger.LogInformation("Attempting to parse user ID from token.");
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim))
+                {
+                    _logger.LogError("CreateOrder failed: 'nameidentifier' claim is missing from the token.");
+                    throw new Exception("Invalid token: 'nameidentifier' claim is missing.");
+                }
 
+                if (!int.TryParse(userIdClaim, out var userId))
+                {
+                    _logger.LogError("CreateOrder failed: 'nameidentifier' claim '{sub}' is not a valid integer.", userIdClaim);
+                    throw new Exception($"Invalid token: 'nameidentifier' claim '{userIdClaim}' is not a valid integer.");
+                }
+                _logger.LogInformation("Successfully parsed user ID: {UserId}", userId);
+
+                _logger.LogInformation("Calling OrderService.CreateOrderAsync for user {UserId}", userId);
                 var result = await _orderService.CreateOrderAsync(userId, request);
+
+                // result now includes PaymentUrl from PayOS
                 return Ok(result);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "An exception occurred in CreateOrder endpoint.");
                 return BadRequest(new { error = ex.Message });
             }
         }
-
 
         [HttpPut("{orderId}/status")]
         [Authorize(Roles = "admin,manager,seller")]
@@ -90,8 +113,8 @@ namespace SmartFoodAPI.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                                       throw new Exception("Invalid token."));
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+                    ?? throw new Exception("Invalid token."));
 
                 var orderDetail = await _orderService.GetOrderDetailAsync(userId, orderId);
                 return Ok(orderDetail);
@@ -108,8 +131,8 @@ namespace SmartFoodAPI.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                                       throw new Exception("Invalid token."));
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+                    ?? throw new Exception("Invalid token."));
 
                 var orders = await _orderService.GetOrdersByCustomerAsync(userId);
                 return Ok(orders);
@@ -126,12 +149,12 @@ namespace SmartFoodAPI.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                                       throw new Exception("Invalid token."));
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+                    ?? throw new Exception("Invalid token."));
 
                 var success = await _orderService.CancelOrderAsync(userId, orderId);
                 if (!success)
-                    return BadRequest(new { error = "Order cannot be cancelled. Only orders in 'Created' status can be cancelled." });
+                    return BadRequest(new { error = "Order cannot be cancelled." });
 
                 return Ok(new { message = $"Order {orderId} has been cancelled successfully." });
             }

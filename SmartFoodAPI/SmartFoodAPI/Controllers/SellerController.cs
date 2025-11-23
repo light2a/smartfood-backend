@@ -1,7 +1,14 @@
-﻿using BLL.IServices;
-using BLL.DTOs.Order;
+﻿using BLL.DTOs.Order;
+using BLL.DTOs.Seller;
+using BLL.Extensions;
+using BLL.IServices;
+using DAL.Models;
+using DAL.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Stripe;
+using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace SmartFoodAPI.Controllers
 {
@@ -13,12 +20,32 @@ namespace SmartFoodAPI.Controllers
         private readonly ISellerService _sellerService;
         private readonly IOrderService _orderService;
         private readonly ILogger<SellerController> _logger;
+        private readonly IPaymentService _paymentService;
 
-        public SellerController(ISellerService sellerService, IOrderService orderService, ILogger<SellerController> logger)
+        public SellerController(
+            ISellerService sellerService,
+            IOrderService orderService,
+            ILogger<SellerController> logger,
+            IPaymentService paymentService)
         {
             _sellerService = sellerService;
             _orderService = orderService;
             _logger = logger;
+            _paymentService = paymentService;
+        }
+
+        // ===============================
+        // ✅ Get Bank List
+        // ===============================
+        [HttpGet("banks")]
+        [AllowAnonymous]
+        public IActionResult GetBankList()
+        {
+            var banks = Enum.GetValues(typeof(VietnameseBankCode))
+                .Cast<VietnameseBankCode>()
+                .Select(b => new BankDto { Name = b.GetDescription(), Value = b.ToString() })
+                .ToList();
+            return Ok(banks);
         }
 
         // ===============================
@@ -39,27 +66,7 @@ namespace SmartFoodAPI.Controllers
             }
         }
 
-        // ===============================
-        // ✅ Stripe Onboarding
-        // ===============================
-        [HttpGet("stripe/onboarding-link")]
-        public async Task<IActionResult> GetStripeOnboardingLink()
-        {
-            try
-            {
-                var sellerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "SellerId");
-                if (sellerIdClaim == null)
-                    return Unauthorized(new { error = "Seller ID not found in token." });
 
-                int sellerId = int.Parse(sellerIdClaim.Value);
-                var onboardingUrl = await _sellerService.GenerateStripeOnboardingLinkAsync(sellerId);
-                return Ok(new { url = onboardingUrl });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { error = ex.Message });
-            }
-        }
 
         // ===============================
         // ✅ Get All Orders for Seller’s Restaurant(s)
@@ -134,5 +141,31 @@ namespace SmartFoodAPI.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        // ===============================
+        // ✅ Update Seller Bank Info
+        // ===============================
+        [HttpPut("bank-info")]
+        public async Task<IActionResult> UpdateBankInfo([FromBody] BLL.DTOs.Seller.UpdateSellerBankInfoRequestDto dto)
+        {
+            try
+            {
+                var sellerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "SellerId");
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Seller ID not found in token." });
+
+                int sellerId = int.Parse(sellerIdClaim.Value);
+                await _sellerService.UpdateBankInfoAsync(sellerId, dto);
+                return Ok(new { message = "Bank information updated successfully." });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[SellerController] Failed to update bank info for seller");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
+
+
 }
+

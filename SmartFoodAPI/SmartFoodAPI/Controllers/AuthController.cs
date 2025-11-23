@@ -391,7 +391,7 @@ namespace SmartFoodAPI.Controllers
             try
             {
                 // ✅ Get the current user's ID from JWT claims
-                var accountIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+                var accountIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (accountIdClaim == null)
                     return Unauthorized(new { error = "Invalid token or missing account ID." });
 
@@ -415,7 +415,7 @@ namespace SmartFoodAPI.Controllers
         {
             try
             {
-                var accountIdClaim = User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
+                var accountIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (accountIdClaim == null)
                     return Unauthorized(new { error = "Invalid token or missing account ID." });
 

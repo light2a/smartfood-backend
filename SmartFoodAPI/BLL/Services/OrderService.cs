@@ -2,8 +2,10 @@
 using BLL.IServices;
 using DAL.IRepositories;
 using DAL.Models;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -13,11 +15,15 @@ namespace BLL.Services
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IMenuItemRepository _menuItemRepository;
+        private readonly IPaymentService _paymentService;
+        private readonly ILogger<OrderService> _logger;
 
-        public OrderService(IOrderRepository orderRepository, IMenuItemRepository menuItemRepository)
+        public OrderService(IOrderRepository orderRepository, IMenuItemRepository menuItemRepository, IPaymentService paymentService, ILogger<OrderService> logger)
         {
             _orderRepository = orderRepository;
             _menuItemRepository = menuItemRepository;
+            _paymentService = paymentService;
+            _logger = logger;
         }
 
         public async Task<PagedResult<OrderDetailDto>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
@@ -56,8 +62,13 @@ namespace BLL.Services
 
         public async Task<CreateOrderResponse> CreateOrderAsync(int customerAccountId, CreateOrderRequest request)
         {
+            _logger.LogInformation("Attempting to create order for customer {CustomerId} with request: {Request}", customerAccountId, JsonSerializer.Serialize(request));
+
             if (request.Items == null || request.Items.Count == 0)
+            {
+                _logger.LogError("CreateOrder failed: Order must contain at least one item.");
                 throw new Exception("Order must contain at least one item.");
+            }
 
             var orderItems = new List<OrderItem>();
             decimal totalAmount = 0;
@@ -65,35 +76,38 @@ namespace BLL.Services
 
             foreach (var item in request.Items)
             {
+                _logger.LogInformation("Processing menu item ID {MenuItemId} with quantity {Quantity}", item.MenuItemId, item.Quantity);
                 var menuItem = await _menuItemRepository.GetByIdAsync(item.MenuItemId);
                 if (menuItem == null)
+                {
+                    _logger.LogError("CreateOrder failed: Menu item ID {MenuItemId} is not available.", item.MenuItemId);
                     throw new Exception($"Menu item ID {item.MenuItemId} is not available.");
+                }
 
                 if (restaurantId == 0)
+                {
                     restaurantId = menuItem.RestaurantId;
+                    _logger.LogInformation("Set restaurant ID to {RestaurantId} based on first item.", restaurantId);
+                }
                 else if (restaurantId != menuItem.RestaurantId)
+                {
+                    _logger.LogError("CreateOrder failed: All menu items must be from the same restaurant. Expected {ExpectedRestaurantId}, got {ActualRestaurantId}", restaurantId, menuItem.RestaurantId);
                     throw new Exception("All menu items must be from the same restaurant.");
+                }
 
-                var orderItem = new OrderItem
+                orderItems.Add(new OrderItem
                 {
                     MenuItemId = menuItem.Id,
                     Qty = item.Quantity,
                     UnitPrice = menuItem.Price
-                };
+                });
 
                 totalAmount += menuItem.Price * item.Quantity;
-                orderItems.Add(orderItem);
             }
 
-            // ✅ Determine shipping fee based on enum value
-            decimal shippingFee = 0;
-            if (request.OrderType == OrderType.Delivery)
-            {
-                // Later: replace with distance-based calculation
-                shippingFee = 15000m;
-            }
+            decimal shippingFee = request.OrderType == OrderType.Delivery ? 15000m : 0;
+            _logger.LogInformation("Calculated total amount: {TotalAmount}, Shipping fee: {ShippingFee}", totalAmount, shippingFee);
 
-            // ✅ Create order with enum OrderType
             var order = new Order
             {
                 CustomerAccountId = customerAccountId,
@@ -105,24 +119,34 @@ namespace BLL.Services
                 OrderType = request.OrderType,
                 OrderItems = orderItems,
                 StatusHistory = new List<OrderStatusHistory>
-        {
-            new OrderStatusHistory
-            {
-                Status = "Created",
-                Note = "Order created successfully."
-            }
-        }
+                {
+                    new OrderStatusHistory
+                    {
+                        Status = "Created",
+                        Note = "Order created successfully."
+                    }
+                }
             };
 
+            _logger.LogInformation("Adding order to the database...");
             var createdOrder = await _orderRepository.AddAsync(order);
+            _logger.LogInformation("Order {OrderId} created successfully in database.", createdOrder.Id);
 
-            return new CreateOrderResponse
+            _logger.LogInformation("Generating PayOS payment URL for order {OrderId}...", createdOrder.Id);
+            string paymentUrl = await _paymentService.CreatePayOsOrderAsync(createdOrder.Id);
+            _logger.LogInformation("Payment URL generated for order {OrderId}.", createdOrder.Id);
+
+            var response = new CreateOrderResponse
             {
                 OrderId = createdOrder.Id,
                 TotalAmount = totalAmount,
                 FinalAmount = order.FinalAmount,
+                PaymentUrl = paymentUrl,
                 Message = $"Order created with type '{order.OrderType}' and status 'Created'."
             };
+
+            _logger.LogInformation("Order creation process completed successfully for order {OrderId}.", createdOrder.Id);
+            return response;
         }
 
 

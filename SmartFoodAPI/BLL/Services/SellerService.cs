@@ -1,9 +1,14 @@
 ﻿using BLL.IServices;
 using DAL.IRepositories;
 using DAL.Models;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Stripe;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Net.Http;
+using System.Net.Http.Json;
 
 namespace BLL.Services
 {
@@ -11,11 +16,17 @@ namespace BLL.Services
     {
         private readonly ISellerRepository _sellerRepository;
         private readonly IAccountRepository _accountRepository;
+        private readonly ILogger<SellerService> _logger;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _config;
 
-        public SellerService(ISellerRepository sellerRepository, IAccountRepository accountRepository)
+        public SellerService(ISellerRepository sellerRepository, IAccountRepository accountRepository, ILogger<SellerService> logger, IHttpClientFactory httpClientFactory, IConfiguration config)
         {
             _sellerRepository = sellerRepository;
             _accountRepository = accountRepository;
+            _logger = logger;
+            _config = config;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<IEnumerable<Seller>> GetAllSellersAsync()
@@ -34,28 +45,11 @@ namespace BLL.Services
             if (seller == null)
                 throw new Exception("Seller not found.");
 
-            // ✅ Create Stripe connected account
-            var options = new AccountCreateOptions
-            {
-                Type = "express",
-                Email = seller.User.Email,
-                BusinessType = "individual",
-                Capabilities = new AccountCapabilitiesOptions
-                {
-                    CardPayments = new AccountCapabilitiesCardPaymentsOptions { Requested = true },
-                    Transfers = new AccountCapabilitiesTransfersOptions { Requested = true }
-                }
-            };
-
-            var service = new AccountService();
-            var account = service.Create(options);
-
-            // ✅ Save Stripe account ID
-            seller.StripeAccountId = account.Id;
+            // ✅ Approve seller without Stripe
             seller.Status = SellerStatus.Available;
             await _sellerRepository.UpdateAsync(seller);
 
-            // ✅ Activate account
+            // ✅ Activate linked user account
             var userAccount = await _accountRepository.GetByIdAsync(seller.UserAccountId);
             if (userAccount != null)
             {
@@ -64,34 +58,25 @@ namespace BLL.Services
             }
         }
 
-        public async Task<string> GenerateStripeOnboardingLinkAsync(int sellerId)
+        public async Task ValidateSellerBankAsync(int sellerId)
         {
             var seller = await _sellerRepository.GetByIdAsync(sellerId);
-            if (seller == null || string.IsNullOrEmpty(seller.StripeAccountId))
-                throw new Exception("Seller or Stripe account not found.");
-
-            var accountLinkService = new AccountLinkService();
-            var accountLink = accountLinkService.Create(new AccountLinkCreateOptions
-            {
-                Account = seller.StripeAccountId,
-                RefreshUrl = "https://your-frontend.com/seller/stripe/refresh",
-                ReturnUrl = "https://your-frontend.com/seller/stripe/success",
-                Type = "account_onboarding",
-            });
-
-            return accountLink.Url;
+            if (seller == null) throw new Exception("Seller not found.");
+            if (string.IsNullOrEmpty(seller.BankAccountNumber) || !seller.BankCode.HasValue)
+                throw new Exception("Seller bank info is required for payouts.");
         }
-        public async Task MarkStripeOnboardingCompletedAsync(string stripeAccountId)
-        {
-            var seller = await _sellerRepository.GetByStripeAccountIdAsync(stripeAccountId);
-            if (seller == null)
-                throw new Exception("Seller not found for given Stripe account ID.");
 
-            seller.IsStripeOnboardingCompleted = true;
-            seller.Status = SellerStatus.Available;
+        public async Task UpdateBankInfoAsync(int sellerId, DTOs.Seller.UpdateSellerBankInfoRequestDto dto)
+        {
+            var seller = await _sellerRepository.GetByIdAsync(sellerId);
+            if (seller == null)
+                throw new Exception("Seller not found.");
+
+            seller.BankAccountNumber = dto.BankAccountNumber;
+            seller.BankCode = dto.BankCode;
+
             await _sellerRepository.UpdateAsync(seller);
         }
-
-
     }
 }
+

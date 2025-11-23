@@ -1,4 +1,5 @@
-﻿using DAL.Models;
+﻿using BLL.DTOs.Seller;
+using DAL.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,6 @@ namespace BLL.IServices
         Task<IEnumerable<Seller>> GetAllSellersAsync();
         Task<Seller?> GetSellerByIdAsync(int id);
         Task ApproveSellerAsync(int sellerId);
-        Task<string> GenerateStripeOnboardingLinkAsync(int sellerId);
-        Task MarkStripeOnboardingCompletedAsync(string stripeAccountId);
+        Task UpdateBankInfoAsync(int sellerId, UpdateSellerBankInfoRequestDto dto);
     }
 }
