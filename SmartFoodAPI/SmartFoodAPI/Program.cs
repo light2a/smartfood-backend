@@ -252,12 +252,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
+
+app.MapControllers();
+
 // Fallback & Controllers
 app.MapFallback(context =>
 {
     context.Response.StatusCode = 404;
     return context.Response.WriteAsync("Endpoint not found");
 });
-app.MapControllers();
 
 app.Run();
