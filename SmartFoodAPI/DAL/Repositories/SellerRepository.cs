@@ -68,12 +68,6 @@ namespace DAL.Repositories
 
             await _context.SaveChangesAsync();
         }
-        public async Task<Seller?> GetByStripeAccountIdAsync(string stripeAccountId)
-        {
-            return await _context.Sellers
-                .Include(s => s.User)
-                .FirstOrDefaultAsync(s => s.StripeAccountId == stripeAccountId);
-        }
 
         public async Task<PagedResult<Order>> GetPagedBySellerAsync(int sellerId, int pageNumber, int pageSize, string? keyword)
         {
@@ -106,6 +100,14 @@ namespace DAL.Repositories
             };
         }
 
+        public async Task<Seller?> GetByOrderIdAsync(int orderId)
+        {
+            return await _context.Sellers
+                .Include(s => s.User)
+                .Include(s => s.Restaurants)
+                .ThenInclude(r => r.Orders)
+                .FirstOrDefaultAsync(s => s.Restaurants.Any(r => r.Orders.Any(o => o.Id == orderId)));
+        }
 
     }
 }

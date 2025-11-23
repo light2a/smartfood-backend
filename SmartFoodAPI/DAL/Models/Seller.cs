@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DAL.Models.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,12 +16,13 @@ namespace DAL.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public SellerStatus Status { get; set; } = SellerStatus.Unavailable;
 
-        // NEW:
-        public string? StripeAccountId { get; set; }
-        public bool? IsStripeOnboardingCompleted { get; set; } = false;
+        // PayOS payout info
+        public string? BankAccountNumber { get; set; }
+        public VietnameseBankCode? BankCode { get; set; }
 
         public virtual Account User { get; set; }
         public virtual ICollection<Restaurant> Restaurants { get; set; } = new List<Restaurant>();
     }
+
 
 }

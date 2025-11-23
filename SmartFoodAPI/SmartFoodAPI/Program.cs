@@ -1,25 +1,29 @@
-﻿using DAL.Models;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.OpenApi.Models;
-using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Mvc;
-using System.Text;
-using Microsoft.IdentityModel.Tokens;
-using SmartFoodAPI.Common;
-using SmartFoodAPI.Middlewares;
+﻿using BLL.IServices;
+using BLL.Services;
 using DAL.IRepositories;
 using DAL.Repositories;
-using BLL.IServices;
-using BLL.Services;
+using DAL.Models;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using SmartFoodAPI.Common;
+using SmartFoodAPI.Middlewares;
+using System.Text;
+using System.Text.Json.Serialization;
+using PayOS;
+using System.IdentityModel.Tokens.Jwt;
 using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
 var _logger = loggerFactory.CreateLogger<Program>();
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -39,10 +43,21 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISellerService, SellerService>();
-//builder.Services.AddHttpClient<IImageService, ImgBBImageService>();
-
+builder.Services.AddHttpClient(); // For ZaloPay API calls
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
+builder.Services.AddSingleton<PayOSClient>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new PayOSClient(
+        clientId: config["PayOS:ClientId"],
+        apiKey: config["PayOS:ApiKey"],
+        checksumKey: config["PayOS:ChecksumKey"]
+    );
+});
+
+// Configure ZaloPay settings
+builder.Services.Configure<ZaloPaySettings>(builder.Configuration.GetSection("ZaloPay"));
 
 builder.Services.AddSwaggerGen(c =>
 {
@@ -69,14 +84,12 @@ builder.Services.AddSwaggerGen(c =>
     };
 
     c.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        { jwtSecurityScheme, Array.Empty<string>() }
-    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement { { jwtSecurityScheme, Array.Empty<string>() } });
 });
+
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+
 builder.Services.AddDbContext<SmartFoodContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -85,21 +98,37 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         options.JsonSerializerOptions.WriteIndented = true;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>
     {
-        var firstError = context.ModelState
-            .Values.SelectMany(v => v.Errors)
-            .FirstOrDefault()?.ErrorMessage ?? "Invalid input";
+        // Get the logger from the DI container
+        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
 
+        // Log all validation errors
+        foreach (var (key, value) in context.ModelState)
+        {
+            if (value.Errors.Any())
+            {
+                var errors = string.Join(", ", value.Errors.Select(e => e.ErrorMessage));
+                logger.LogError("Model validation error for key '{Key}': {Errors}", key, errors);
+            }
+        }
+
+        var firstError = context.ModelState.Values.SelectMany(v => v.Errors)
+            .FirstOrDefault()?.ErrorMessage ?? "Invalid input";
         var error = ErrorResponse.FromStatus(400, firstError);
         return new BadRequestObjectResult(error);
     };
 });
 
+// Clear default claim type mappings to prevent 'sub' -> 'nameidentifier' mapping
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+// JWT & Google OAuth
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -111,10 +140,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
-
         options.Events = new JwtBearerEvents
         {
             OnChallenge = context =>
@@ -133,49 +160,43 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 return context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(error));
             }
         };
-
     })
-.AddCookie("ExternalCookie", options =>
-{
-    options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.HttpOnly = true;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
-})
-.AddGoogle(options =>
-{
-    options.SignInScheme = "ExternalCookie";
-    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-    options.CallbackPath = "/api/Auth/google-response";
-    options.SaveTokens = true;
-
-    // Add scopes
-    options.Scope.Add("profile");
-    options.Scope.Add("email");
-
-    // Add events to handle the duplicate request issue
-    options.Events = new Microsoft.AspNetCore.Authentication.OAuth.OAuthEvents
+    .AddCookie("ExternalCookie", options =>
     {
-        OnRemoteFailure = context =>
+        options.Cookie.SameSite = SameSiteMode.None;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.HttpOnly = true;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+    })
+    .AddGoogle(options =>
+    {
+        options.SignInScheme = "ExternalCookie";
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+        options.CallbackPath = "/api/Auth/google-response";
+        options.SaveTokens = true;
+        options.Scope.Add("profile");
+        options.Scope.Add("email");
+        options.Events = new Microsoft.AspNetCore.Authentication.OAuth.OAuthEvents
         {
-            context.Response.Redirect($"{builder.Configuration["Frontend:BaseUrl"]}/auth/failed?error=oauth_failed");
-            context.HandleResponse();
-            return Task.CompletedTask;
-        }
-    };
-});
+            OnRemoteFailure = context =>
+            {
+                context.Response.Redirect($"{builder.Configuration["Frontend:BaseUrl"]}/auth/failed?error=oauth_failed");
+                context.HandleResponse();
+                return Task.CompletedTask;
+            }
+        };
+    });
+
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = SameSiteMode.None; // Important for OAuth
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Important for HTTPS
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
-
-
 
 builder.Services.AddCors(options =>
 {
@@ -196,13 +217,12 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
     });
 });
 
-
 builder.Services.AddAuthorization();
-// Add services to the container.
 
+// Build app
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -211,7 +231,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
-
 app.UseSession();
 
 app.Use(async (context, next) =>
@@ -220,23 +239,20 @@ app.Use(async (context, next) =>
         !context.Request.Query.ContainsKey("state") &&
         !context.Request.Query.ContainsKey("code"))
     {
-        // This is the duplicate empty callback — short-circuit safely
         var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
         logger.LogWarning("[GoogleOAuth] Duplicate empty callback intercepted by middleware.");
         context.Response.StatusCode = 200;
-        await context.Response.WriteAsJsonAsync(new
-        {
-            message = "Duplicate Google callback ignored (no state or code).",
-            handled = true
-        });
+        await context.Response.WriteAsJsonAsync(new { message = "Duplicate Google callback ignored (no state or code).", handled = true });
         return;
     }
-
     await next();
 });
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ErrorHandlingMiddleware>();
+
+// Fallback & Controllers
 app.MapFallback(context =>
 {
     context.Response.StatusCode = 404;

@@ -11,6 +11,13 @@ namespace BLL.DTOs.Order
         public int OrderId { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal FinalAmount { get; set; }
-        public string Message { get; set; } = "Order created successfully.";
+
+        /// <summary>
+        /// PayOS payment URL for the customer to complete payment
+        /// </summary>
+        public string PaymentUrl { get; set; }
+
+        public string Message { get; set; }
     }
 }
+

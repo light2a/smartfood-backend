@@ -13,6 +13,6 @@ namespace DAL.IRepositories
         Task DeleteAsync(int id);
         Task<Seller?> GetByUserAccountIdAsync(int accountId);
         Task ApproveSellerAsync(int sellerId);
-        Task<Seller?> GetByStripeAccountIdAsync(string stripeAccountId);
+        Task<Seller?> GetByOrderIdAsync(int orderId);
     }
 }
