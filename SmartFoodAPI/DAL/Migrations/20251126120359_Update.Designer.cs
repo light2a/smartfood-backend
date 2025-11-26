@@ -4,6 +4,7 @@ using DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(SmartFoodContext))]
-    partial class SmartFoodContextModelSnapshot : ModelSnapshot
+    [Migration("20251126120359_Update")]
+    partial class Update
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -467,17 +470,27 @@ namespace DAL.Migrations
                     b.Property<int>("CustomerAccountId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("MenuItemId")
+                        .HasColumnType("int");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
                     b.Property<int>("Rating")
                         .HasColumnType("int");
 
+                    b.Property<int?>("RestaurantId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerAccountId");
 
+                    b.HasIndex("MenuItemId");
+
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("RestaurantId");
 
                     b.ToTable("Feedbacks");
                 });
@@ -618,11 +631,19 @@ namespace DAL.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("DAL.Models.MenuItem", null)
+                        .WithMany("Feedbacks")
+                        .HasForeignKey("MenuItemId");
+
                     b.HasOne("DAL.Models.Order", "Order")
                         .WithMany("Feedbacks")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("DAL.Models.Restaurant", null)
+                        .WithMany("Feedbacks")
+                        .HasForeignKey("RestaurantId");
 
                     b.Navigation("Customer");
 
@@ -641,6 +662,8 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.MenuItem", b =>
                 {
+                    b.Navigation("Feedbacks");
+
                     b.Navigation("OrderItems");
                 });
 
@@ -656,6 +679,8 @@ namespace DAL.Migrations
             modelBuilder.Entity("DAL.Models.Restaurant", b =>
                 {
                     b.Navigation("Categories");
+
+                    b.Navigation("Feedbacks");
 
                     b.Navigation("MenuItems");
 

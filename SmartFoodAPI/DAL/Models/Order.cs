@@ -20,6 +20,7 @@ namespace DAL.Models
 
         public virtual Account Customer { get; set; }
         public virtual Restaurant Restaurant { get; set; }
+        public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
         public virtual ICollection<OrderStatusHistory> StatusHistory { get; set; } = new List<OrderStatusHistory>();
     }
