@@ -202,7 +202,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins("http://localhost:5173", "https://smartfood-frontend-4ngu.vercel.app")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -223,11 +223,11 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Configure pipeline
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "SmartFoodAPI v1");
+});
 
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
@@ -252,12 +252,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
+
+app.MapControllers();
+
 // Fallback & Controllers
 app.MapFallback(context =>
 {
     context.Response.StatusCode = 404;
     return context.Response.WriteAsync("Endpoint not found");
 });
-app.MapControllers();
 
 app.Run();
