@@ -30,6 +30,7 @@ namespace BLL.Services
                 CustomerAccountId = f.CustomerAccountId,
                 Comment = f.Comment,
                 Rating = f.Rating,
+                OrderId = f.OrderId,
                 CreatedAt = f.CreatedAt
             });
         }
@@ -43,6 +44,7 @@ namespace BLL.Services
                 CustomerAccountId = f.CustomerAccountId,
                 Comment = f.Comment,
                 Rating = f.Rating,
+                OrderId = f.OrderId,
                 CreatedAt = f.CreatedAt
             };
         }
@@ -57,6 +59,7 @@ namespace BLL.Services
                     CustomerAccountId = f.CustomerAccountId,
                     Comment = f.Comment,
                     Rating = f.Rating,
+                    OrderId = f.OrderId,
                     CreatedAt = f.CreatedAt
                 }),
                 TotalItems = paged.TotalItems,
@@ -71,6 +74,7 @@ namespace BLL.Services
                 CustomerAccountId = request.CustomerAccountId,
                 Comment = request.Comment,
                 Rating = request.Rating,
+                OrderId = request.OrderId,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -82,6 +86,7 @@ namespace BLL.Services
                 CustomerAccountId = created.CustomerAccountId,
                 Comment = created.Comment,
                 Rating = created.Rating,
+                OrderId = created.OrderId,
                 CreatedAt = created.CreatedAt
             };
         }
@@ -94,6 +99,7 @@ namespace BLL.Services
                 CustomerAccountId = f.CustomerAccountId,
                 Comment = f.Comment,
                 Rating = f.Rating,
+                OrderId = f.OrderId,
                 CreatedAt = f.CreatedAt
             });
         }
