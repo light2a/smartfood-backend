@@ -202,7 +202,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "https://smartfood-frontend.vercel.app/")
+        policy.WithOrigins("http://localhost:5173", "https://smartfood-frontend-4ngu.vercel.app/")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
