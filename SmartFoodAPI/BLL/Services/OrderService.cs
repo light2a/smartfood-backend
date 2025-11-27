@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace BLL.Services
 {
@@ -17,6 +18,11 @@ namespace BLL.Services
         private readonly IMenuItemRepository _menuItemRepository;
         private readonly IPaymentService _paymentService;
         private readonly ILogger<OrderService> _logger;
+
+        public IQueryable<Order> GetAll()
+        {
+            return _orderRepository.GetAll();
+        }
 
         public OrderService(IOrderRepository orderRepository, IMenuItemRepository menuItemRepository, IPaymentService paymentService, ILogger<OrderService> logger)
         {

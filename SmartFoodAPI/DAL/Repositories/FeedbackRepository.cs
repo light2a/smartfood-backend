@@ -35,7 +35,7 @@ namespace DAL.Repositories
 
         public async Task<IEnumerable<Feedback>> GetAllAsync()
         {
-            return await _context.Feedbacks.ToListAsync();
+            return await _context.Feedbacks.AsQueryable().ToListAsync();
         }
 
         public async Task<Feedback?> GetByIdAsync(int id)
