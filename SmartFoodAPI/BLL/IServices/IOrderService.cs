@@ -10,6 +10,7 @@ namespace BLL.IServices
 {
     public interface IOrderService
     {
+        IQueryable<Order> GetAll();
         Task<PagedResult<OrderDetailDto>> GetPagedAsync(int pageNumber, int pageSize, string? keyword);
         Task<CreateOrderResponse> CreateOrderAsync(int customerAccountId, CreateOrderRequest request);
         Task<bool> UpdateOrderStatusAsync(int orderId, string newStatus, string? note = null);

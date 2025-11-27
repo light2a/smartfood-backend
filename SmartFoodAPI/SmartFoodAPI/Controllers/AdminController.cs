@@ -5,6 +5,7 @@ using BLL.DTOs.Order;
 using System.Threading.Tasks;
 using System.Linq;
 using BLL.Services;
+using Stripe;
 
 namespace SmartFoodAPI.Controllers
 {
@@ -15,13 +16,15 @@ namespace SmartFoodAPI.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IOrderService _orderService;
+        private readonly IFeedbackService _feedbackService;
         private readonly ILogger<AdminController> _logger;
 
-        public AdminController(IOrderService orderService, ILogger<AdminController> logger, IAuthService authService)
+        public AdminController(IOrderService orderService, ILogger<AdminController> logger, IAuthService authService, IFeedbackService feedbackService)
         {
             _orderService = orderService;
             _logger = logger;
             _authService = authService;
+            _feedbackService = feedbackService;
         }
 
         [HttpGet("orders")]
@@ -246,6 +249,91 @@ namespace SmartFoodAPI.Controllers
                 PageSize = pageSize
             };
             return Ok(result);
+        }
+
+        [HttpGet("feedback/paging")]
+        public async Task<IActionResult> GetPaged([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? keyword = null)
+        {
+            var result = await _feedbackService.GetPagedAsync(pageNumber, pageSize, keyword);
+            return Ok(result);
+        }
+
+        [HttpGet("accounts/stats")]
+        public IActionResult GetAccountStatistics()
+        {
+            try
+            {
+                var query = _authService.GetAll();
+
+                var totalUsers = query.Count();
+
+                var usersByRole = query
+                    .GroupBy(a => new { a.RoleId, a.Role.RoleName })
+                    .Select(g => new
+                    {
+                        RoleId = g.Key.RoleId,
+                        RoleName = g.Key.RoleName,
+                        Count = g.Count()
+                    })
+                    .ToList();
+
+                return Ok(new
+                {
+                    TotalUsers = totalUsers,
+                    RoleBreakdown = usersByRole
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[AdminController] Error getting account statistics");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        [HttpGet("order/stats")]
+        public IActionResult GetOrderStatistics()
+        {
+            try
+            {
+                var query = _orderService.GetAll();
+
+                var totalOrders = query.Count();    
+
+                var grossRevenue = query.Sum(o => o.FinalAmount);
+
+                var netRevenue = query.Sum(o => o.FinalAmount * 0.2m); // system revenue only
+
+                return Ok(new
+                {
+                    TotalOrders = totalOrders,
+                    GrossRevenue = grossRevenue,
+                    NetRevenue = netRevenue
+                });
+            }
+            catch
+            (Exception ex)
+            {
+                _logger.LogError(ex, "[AdminController] Error getting account statistics");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        [HttpGet("feedback/stats")]
+        public async Task<IActionResult> GetFeedbackStatistics()
+        {
+            try
+            {
+                var list = await _feedbackService.GetAllAsync();
+                var totalFeedbacks = list.Count();
+                return Ok(new
+                {
+                    TotalFeedbacks = totalFeedbacks,
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[AdminController] Error getting feedback statistics");
+                return BadRequest(new { message = ex.Message });
+                
+            }    
         }
     }
 
