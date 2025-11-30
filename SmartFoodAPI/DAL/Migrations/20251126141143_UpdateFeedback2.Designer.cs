@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(SmartFoodContext))]
-    [Migration("20251118134018_UpdateSellerBankInfo")]
-    partial class UpdateSellerBankInfo
+    [Migration("20251126141143_UpdateFeedback2")]
+    partial class UpdateFeedback2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -137,46 +137,6 @@ namespace DAL.Migrations
                     b.HasIndex("RestaurantId");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("DAL.Models.Feedback", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Comment")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("(sysutcdatetime())");
-
-                    b.Property<int>("CustomerAccountId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("MenuItemId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("RestaurantId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerAccountId");
-
-                    b.HasIndex("MenuItemId");
-
-                    b.HasIndex("RestaurantId");
-
-                    b.ToTable("Feedbacks");
                 });
 
             modelBuilder.Entity("DAL.Models.LoyaltyPoint", b =>
@@ -493,6 +453,38 @@ namespace DAL.Migrations
                     b.ToTable("Sellers");
                 });
 
+            modelBuilder.Entity("Feedback", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CustomerAccountId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerAccountId");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("Feedbacks");
+                });
+
             modelBuilder.Entity("DAL.Models.Account", b =>
                 {
                     b.HasOne("DAL.Models.Role", "Role")
@@ -510,29 +502,6 @@ namespace DAL.Migrations
                         .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Restaurant");
-                });
-
-            modelBuilder.Entity("DAL.Models.Feedback", b =>
-                {
-                    b.HasOne("DAL.Models.Account", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerAccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("DAL.Models.MenuItem", "MenuItem")
-                        .WithMany("Feedbacks")
-                        .HasForeignKey("MenuItemId");
-
-                    b.HasOne("DAL.Models.Restaurant", "Restaurant")
-                        .WithMany("Feedbacks")
-                        .HasForeignKey("RestaurantId");
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("MenuItem");
 
                     b.Navigation("Restaurant");
                 });
@@ -644,6 +613,25 @@ namespace DAL.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Feedback", b =>
+                {
+                    b.HasOne("DAL.Models.Account", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DAL.Models.Order", "Order")
+                        .WithMany("Feedbacks")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("DAL.Models.Area", b =>
                 {
                     b.Navigation("Restaurants");
@@ -656,13 +644,13 @@ namespace DAL.Migrations
 
             modelBuilder.Entity("DAL.Models.MenuItem", b =>
                 {
-                    b.Navigation("Feedbacks");
-
                     b.Navigation("OrderItems");
                 });
 
             modelBuilder.Entity("DAL.Models.Order", b =>
                 {
+                    b.Navigation("Feedbacks");
+
                     b.Navigation("OrderItems");
 
                     b.Navigation("StatusHistory");
@@ -671,8 +659,6 @@ namespace DAL.Migrations
             modelBuilder.Entity("DAL.Models.Restaurant", b =>
                 {
                     b.Navigation("Categories");
-
-                    b.Navigation("Feedbacks");
 
                     b.Navigation("MenuItems");
 

@@ -207,25 +207,16 @@ namespace DAL.Models
             // === Feedback ===
             modelBuilder.Entity<Feedback>(entity =>
             {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).ValueGeneratedOnAdd();
-                entity.Property(e => e.Rating).IsRequired();
-                entity.Property(e => e.Comment).HasMaxLength(1000);
-                entity.Property(e => e.CreatedAt).HasDefaultValueSql("(sysutcdatetime())");
+                entity.HasOne(f => f.Order)
+                    .WithMany(o => o.Feedbacks)
+                    .HasForeignKey(f => f.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(f => f.Customer)
                     .WithMany()
-                    .HasForeignKey(f => f.CustomerAccountId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(f => f.Restaurant)
-                    .WithMany(r => r.Feedbacks)
-                    .HasForeignKey(f => f.RestaurantId);
-
-                entity.HasOne(f => f.MenuItem)
-                    .WithMany(m => m.Feedbacks)
-                    .HasForeignKey(f => f.MenuItemId);
+                    .HasForeignKey(f => f.CustomerAccountId);
             });
+
 
             // === Category ===
             modelBuilder.Entity<Category>(entity =>
