@@ -1,4 +1,5 @@
 ﻿using BLL.DTOs.Order;
+using BLL.DTOs.Seller;
 using BLL.IServices;
 using DAL.IRepositories;
 using DAL.Models;
@@ -8,6 +9,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace BLL.Services
 {
@@ -16,13 +18,20 @@ namespace BLL.Services
         private readonly IOrderRepository _orderRepository;
         private readonly IMenuItemRepository _menuItemRepository;
         private readonly IPaymentService _paymentService;
+        private readonly IRestaurantRepository _restaurantRepository;
         private readonly ILogger<OrderService> _logger;
 
-        public OrderService(IOrderRepository orderRepository, IMenuItemRepository menuItemRepository, IPaymentService paymentService, ILogger<OrderService> logger)
+        public IQueryable<Order> GetAll()
+        {
+            return _orderRepository.GetAll();
+        }
+
+        public OrderService(IOrderRepository orderRepository, IMenuItemRepository menuItemRepository, IPaymentService paymentService, IRestaurantRepository restaurantRepository, ILogger<OrderService> logger)
         {
             _orderRepository = orderRepository;
             _menuItemRepository = menuItemRepository;
             _paymentService = paymentService;
+            _restaurantRepository = restaurantRepository;
             _logger = logger;
         }
 
@@ -34,7 +43,9 @@ namespace BLL.Services
                 Items = pagedResult.Items.Select(o => new OrderDetailDto
                 {
                     OrderId = o.Id,
+                    CustomerAccountId = o.CustomerAccountId,
                     TotalAmount = o.TotalAmount,
+                    CommissionPercent = o.CommissionPercent,
                     ShippingFee = o.ShippingFee,
                     FinalAmount = o.FinalAmount,
                     CreatedAt = o.CreatedAt,
@@ -105,7 +116,16 @@ namespace BLL.Services
                 totalAmount += menuItem.Price * item.Quantity;
             }
 
-            decimal shippingFee = request.OrderType == OrderType.Delivery ? 15000m : 0;
+            decimal shippingFee = 0;
+            if (request.OrderType == OrderType.Delivery)
+            {
+                if (request.DeliveryLatitude == null || request.DeliveryLongitude == null)
+                {
+                    throw new Exception("Delivery address is required for delivery orders.");
+                }
+                shippingFee = await CalculateShippingFeeAsync(restaurantId, request.DeliveryLatitude.Value, request.DeliveryLongitude.Value);
+            }
+
             _logger.LogInformation("Calculated total amount: {TotalAmount}, Shipping fee: {ShippingFee}", totalAmount, shippingFee);
 
             var order = new Order
@@ -117,6 +137,9 @@ namespace BLL.Services
                 CommissionPercent = 0,
                 FinalAmount = totalAmount + shippingFee,
                 OrderType = request.OrderType,
+                DeliveryAddress = request.DeliveryAddress,
+                DeliveryLatitude = request.DeliveryLatitude,
+                DeliveryLongitude = request.DeliveryLongitude,
                 OrderItems = orderItems,
                 StatusHistory = new List<OrderStatusHistory>
                 {
@@ -183,7 +206,9 @@ namespace BLL.Services
             return new OrderDetailDto
             {
                 OrderId = order.Id,
+                CustomerAccountId = order.CustomerAccountId,
                 TotalAmount = order.TotalAmount,
+                CommissionPercent = order.CommissionPercent,
                 ShippingFee = order.ShippingFee,
                 FinalAmount = order.FinalAmount,
                 CreatedAt = order.CreatedAt,
@@ -294,10 +319,13 @@ namespace BLL.Services
                 Items = pagedOrders.Items.Select(o => new OrderDetailDto
                 {
                     OrderId = o.Id,
+                    CustomerAccountId = o.CustomerAccountId,
                     TotalAmount = o.TotalAmount,
+                    CommissionPercent = o.CommissionPercent,
                     FinalAmount = o.FinalAmount,
                     CreatedAt = o.CreatedAt,
                     RestaurantName = o.Restaurant?.Name,
+                    DeliveryAddress = o.DeliveryAddress,
                     Items = o.OrderItems.Select(i => new OrderItemDetailDto
                     {
                         MenuItemName = i.MenuItem.Name,
@@ -331,7 +359,9 @@ namespace BLL.Services
             return new OrderDetailDto
             {
                 OrderId = order.Id,
+                CustomerAccountId = order.CustomerAccountId,
                 TotalAmount = order.TotalAmount,
+                CommissionPercent = order.CommissionPercent,
                 FinalAmount = order.FinalAmount,
                 CreatedAt = order.CreatedAt,
                 RestaurantName = order.Restaurant?.Name ?? "Unknown Restaurant",
@@ -381,5 +411,148 @@ namespace BLL.Services
             return true;
         }
 
+        public async Task<decimal> CalculateShippingFeeAsync(int restaurantId, double latitude, double longitude)
+        {
+            var restaurant = await _restaurantRepository.GetByIdAsync(restaurantId);
+            if (restaurant == null || string.IsNullOrEmpty(restaurant.Coordinate))
+            {
+                // Return a default shipping fee or throw an exception
+                return 15000m;
+            }
+
+            var coords = restaurant.Coordinate.Split(',');
+            if (coords.Length == 2 && double.TryParse(coords[0], out var lat) && double.TryParse(coords[1], out var lon))
+            {
+                var distance = CalculateDistance(lat, lon, latitude, longitude);
+                // 10,000 VND base fee + 5,000 VND per km
+                return 10000m + (decimal)(distance * 5000);
+            }
+
+            // Return a default shipping fee or throw an exception
+            return 15000m;
+        }
+
+        private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+        {
+            const double R = 6371; // Radius of the earth in km
+            var dLat = ToRadians(lat2 - lat1);
+            var dLon = ToRadians(lon2 - lon1);
+            var a =
+                Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            var d = R * c; // Distance in km
+            return d;
+        }
+
+        private double ToRadians(double angle)
+        {
+            return (Math.PI / 180) * angle;
+        }
+
+        public async Task<decimal> GetSellerRevenueAsync(int sellerId)
+        {
+            var orders = await _orderRepository.GetPagedBySellerAsync(sellerId, 1, int.MaxValue, null);
+            var completedOrders = orders.Items.Where(o => o.StatusHistory.Any(s => s.Status == "Completed")).ToList();
+
+            decimal totalRevenue = 0;
+            foreach (var order in completedOrders)
+            {
+                totalRevenue += order.FinalAmount - (order.TotalAmount * order.CommissionPercent / 100) - order.ShippingFee;
+            }
+
+            return totalRevenue;
+        }
+
+        public async Task<SellerStatsDto> GetSellerDashboardStatisticsAsync(int sellerId)
+        {
+            var orders = await _orderRepository.GetPagedBySellerAsync(sellerId, 1, int.MaxValue, null);
+            var completedOrders = orders.Items.Where(o => o.StatusHistory.Any(s => s.Status == "Completed")).ToList();
+            
+
+            var totalRevenue = completedOrders.Sum(o => o.FinalAmount - (o.TotalAmount * o.CommissionPercent / 100) - o.ShippingFee);
+            var totalOrders = completedOrders.Count();
+            var averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+            var uniqueCustomers = completedOrders.Select(o => o.CustomerAccountId).Distinct().Count();
+
+            return new SellerStatsDto
+            {
+                TotalRevenue = totalRevenue,
+                TotalOrders = totalOrders,
+                AverageOrderValue = averageOrderValue,
+                UniqueCustomers = uniqueCustomers
+            };
+        }
+
+        public async Task<IEnumerable<RevenueOverTimeDto>> GetSellerRevenueOverTimeAsync(int sellerId, string period)
+        {
+            var orders = await _orderRepository.GetPagedBySellerAsync(sellerId, 1, int.MaxValue, null);
+            var completedOrders = orders.Items.Where(o => o.StatusHistory.Any(s => s.Status == "Completed")).ToList();
+
+            IEnumerable<RevenueOverTimeDto> result;
+
+            if (period.ToLower() == "monthly")
+            {
+                result = completedOrders
+                    .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
+                    .Select(g => new RevenueOverTimeDto
+                    {
+                        Period = $"{g.Key.Year}-{g.Key.Month:00}",
+                        Revenue = g.Sum(o => o.FinalAmount - (o.TotalAmount * o.CommissionPercent / 100) - o.ShippingFee)
+                    })
+                    .OrderBy(r => r.Period)
+                    .ToList();
+            }
+            else // daily or default
+            {
+                result = completedOrders
+                    .GroupBy(o => o.CreatedAt.Date)
+                    .Select(g => new RevenueOverTimeDto
+                    {
+                        Period = g.Key.ToString("yyyy-MM-dd"),
+                        Revenue = g.Sum(o => o.FinalAmount - (o.TotalAmount * o.CommissionPercent / 100) - o.ShippingFee)
+                    })
+                    .OrderBy(r => r.Period)
+                    .ToList();
+            }
+
+            return result;
+        }
+
+        public async Task<IEnumerable<OrderStatusDistributionDto>> GetSellerOrderStatusDistributionAsync(int sellerId)
+        {
+            var orders = await _orderRepository.GetPagedBySellerAsync(sellerId, 1, int.MaxValue, null);
+            
+
+            return orders.Items
+                .GroupBy(o => o.StatusHistory.OrderByDescending(s => s.CreatedAt).FirstOrDefault()?.Status ?? "Unknown")
+                .Select(g => new OrderStatusDistributionDto
+                {
+                    Status = g.Key,
+                    Count = g.Count()
+                })
+                .ToList();
+        }
+
+        public async Task<IEnumerable<PopularMenuItemDto>> GetSellerPopularMenuItemsAsync(int sellerId)
+        {
+            var orders = await _orderRepository.GetPagedBySellerAsync(sellerId, 1, int.MaxValue, null);
+            var completedOrders = orders.Items.Where(o => o.StatusHistory.Any(s => s.Status == "Completed")).ToList();
+            
+
+            return orders.Items
+                .Where(o => o.StatusHistory.Any(s => s.Status == "Completed"))
+                .SelectMany(o => o.OrderItems)
+                .GroupBy(oi => oi.MenuItem.Name)
+                .Select(g => new PopularMenuItemDto
+                {
+                    MenuItemName = g.Key,
+                    SalesCount = g.Sum(oi => oi.Qty)
+                })
+                .OrderByDescending(x => x.SalesCount)
+                .Take(5) // Top 5 popular items
+                .ToList();
+        }
     }
 }

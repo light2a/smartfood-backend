@@ -18,6 +18,7 @@ namespace DAL.IRepositories
         Task<IEnumerable<Restaurant>> SearchAsync(string? keyword);
         Task ToggleActiveAsync(int id, bool isActive);
         Task<IEnumerable<Restaurant>> SearchByMenuItemNameAsync(string keyword);
+        Task<IEnumerable<Restaurant>> GetBySellerIdAsync(int sellerId);
         //Task<IEnumerable<Restaurant>> ChangeActiveAsync(int areaId, bool isActive);
     }
 }

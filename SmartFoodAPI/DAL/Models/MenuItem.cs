@@ -20,6 +20,5 @@ namespace DAL.Models
         public virtual Category Category { get; set; } = null!;
         public virtual Restaurant Restaurant { get; set; } = null!;
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
-        public virtual ICollection<Feedback> Feedbacks { get; set; } = new List<Feedback>();
     }
 }

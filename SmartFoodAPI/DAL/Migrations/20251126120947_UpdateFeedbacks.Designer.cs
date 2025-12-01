@@ -4,6 +4,7 @@ using DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DAL.Migrations
 {
     [DbContext(typeof(SmartFoodContext))]
-    partial class SmartFoodContextModelSnapshot : ModelSnapshot
+    [Migration("20251126120947_UpdateFeedbacks")]
+    partial class UpdateFeedbacks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -228,15 +231,6 @@ namespace DAL.Migrations
 
                     b.Property<int>("CustomerAccountId")
                         .HasColumnType("int");
-
-                    b.Property<string>("DeliveryAddress")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double?>("DeliveryLatitude")
-                        .HasColumnType("float");
-
-                    b.Property<double?>("DeliveryLongitude")
-                        .HasColumnType("float");
 
                     b.Property<decimal>("FinalAmount")
                         .HasColumnType("decimal(18,2)");

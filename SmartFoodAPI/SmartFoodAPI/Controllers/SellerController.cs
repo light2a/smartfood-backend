@@ -14,7 +14,7 @@ namespace SmartFoodAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Seller")]
+    [Authorize(Roles = "Seller,seller")]
     public class SellerController : ControllerBase
     {
         private readonly ISellerService _sellerService;
@@ -32,6 +32,46 @@ namespace SmartFoodAPI.Controllers
             _orderService = orderService;
             _logger = logger;
             _paymentService = paymentService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSellerInfo()
+        {
+            try
+            {
+                var sellerIdClaim = User.FindFirst("SellerId")?.Value;
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing Seller ID." });
+
+                int sellerId = int.Parse(sellerIdClaim);
+
+                var sellerInfo = await _sellerService.GetSellerInfoAsync(sellerId);
+                return Ok(sellerInfo);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> UpdateSellerInfo([FromBody] UpdateSellerInfoRequestDto dto)
+        {
+            try
+            {
+                var sellerIdClaim = User.FindFirst("SellerId")?.Value;
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing Seller ID." });
+
+                int sellerId = int.Parse(sellerIdClaim);
+
+                await _sellerService.UpdateSellerInfoAsync(sellerId, dto);
+                return Ok(new { message = "Seller information updated successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
         // ===============================
@@ -162,6 +202,86 @@ namespace SmartFoodAPI.Controllers
             {
                 _logger.LogError(ex, "[SellerController] Failed to update bank info for seller");
                 return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/statistics")]
+        public async Task<IActionResult> GetDashboardStatistics()
+        {
+            try
+            {
+                var sellerIdClaim = User.FindFirst("SellerId")?.Value;
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing Seller ID." });
+
+                int sellerId = int.Parse(sellerIdClaim);
+
+                var stats = await _orderService.GetSellerDashboardStatisticsAsync(sellerId);
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/revenue-over-time")]
+        public async Task<IActionResult> GetRevenueOverTime([FromQuery] string period = "daily")
+        {
+            try
+            {
+                var sellerIdClaim = User.FindFirst("SellerId")?.Value;
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing Seller ID." });
+
+                int sellerId = int.Parse(sellerIdClaim);
+
+                var revenueData = await _orderService.GetSellerRevenueOverTimeAsync(sellerId, period);
+                return Ok(revenueData);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/order-status-distribution")]
+        public async Task<IActionResult> GetOrderStatusDistribution()
+        {
+            try
+            {
+                var sellerIdClaim = User.FindFirst("SellerId")?.Value;
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing Seller ID." });
+
+                int sellerId = int.Parse(sellerIdClaim);
+
+                var distribution = await _orderService.GetSellerOrderStatusDistributionAsync(sellerId);
+                return Ok(distribution);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard/popular-menu-items")]
+        public async Task<IActionResult> GetPopularMenuItems()
+        {
+            try
+            {
+                var sellerIdClaim = User.FindFirst("SellerId")?.Value;
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing Seller ID." });
+
+                int sellerId = int.Parse(sellerIdClaim);
+
+                var popularItems = await _orderService.GetSellerPopularMenuItemsAsync(sellerId);
+                return Ok(popularItems);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
             }
         }
     }

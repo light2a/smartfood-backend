@@ -14,9 +14,14 @@ namespace DAL.Repositories
             _context = context;
         }
 
+        public IQueryable<Order> GetAll()
+        {
+            return _context.Orders;
+        }
+
         public async Task<PagedResult<Order>> GetPagedAsync(int pageNumber, int pageSize, string? keyword)
         {
-            var query = _context.Orders.AsQueryable();
+            var query = _context.Orders.Include(o => o.StatusHistory).AsQueryable();
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 query = query.Where(o => o.Customer.FullName.Contains(keyword) ||

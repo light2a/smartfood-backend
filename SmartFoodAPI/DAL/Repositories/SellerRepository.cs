@@ -109,5 +109,17 @@ namespace DAL.Repositories
                 .FirstOrDefaultAsync(s => s.Restaurants.Any(r => r.Orders.Any(o => o.Id == orderId)));
         }
 
+        public async Task<Seller> GetSellerInfoAsync(int sellerId)
+        {
+            var seller = await GetByIdAsync(sellerId);
+            if (seller == null)
+                throw new Exception("Seller not found.");
+            return seller;
+        }
+
+        public async Task UpdateSellerInfoAsync(Seller seller)
+        {
+            await UpdateAsync(seller);
+        }
     }
 }

@@ -537,5 +537,34 @@ namespace SmartFoodAPI.Controllers
         //    return Ok(new { url = link.Url });
         //}
 
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMyProfile()
+        {
+            try
+            {
+                var accountIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (accountIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing account ID." });
+
+                int accountId = int.Parse(accountIdClaim);
+
+                var account = await _authService.GetAccountByIdAsync(accountId);
+                if (account == null)
+                {
+                    return NotFound(new { error = "Account not found." });
+                }
+
+                return Ok(new {
+                    FullName = account.FullName,
+                    PhoneNumber = account.PhoneNumber,
+                    Email = account.Email
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
     }
 }
