@@ -14,5 +14,7 @@ namespace BLL.IServices
         Task<Seller?> GetSellerByIdAsync(int id);
         Task ApproveSellerAsync(int sellerId);
         Task UpdateBankInfoAsync(int sellerId, UpdateSellerBankInfoRequestDto dto);
+        Task<SellerInfoRequestDto> GetSellerInfoAsync(int sellerId);
+        Task UpdateSellerInfoAsync(int sellerId, UpdateSellerInfoRequestDto dto);
     }
 }

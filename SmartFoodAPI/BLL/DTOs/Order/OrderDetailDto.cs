@@ -6,8 +6,10 @@ namespace BLL.DTOs.Order
     public class OrderDetailDto
     {
         public int OrderId { get; set; }
+        public int CustomerAccountId { get; set; }
         public decimal TotalAmount { get; set; }
         public decimal ShippingFee { get; set; }
+        public decimal CommissionPercent { get; set; }
         public decimal FinalAmount { get; set; }
         public DateTime CreatedAt { get; set; }
 

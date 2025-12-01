@@ -77,6 +77,30 @@ namespace BLL.Services
 
             await _sellerRepository.UpdateAsync(seller);
         }
+
+        public async Task<DTOs.Seller.SellerInfoRequestDto> GetSellerInfoAsync(int sellerId)
+        {
+            var seller = await _sellerRepository.GetByIdAsync(sellerId);
+            if (seller == null)
+                throw new Exception("Seller not found.");
+
+            return new DTOs.Seller.SellerInfoRequestDto
+            {
+                DisplayName = seller.DisplayName,
+                Description = seller.Description,
+            };
+        }
+
+        public async Task UpdateSellerInfoAsync(int sellerId, DTOs.Seller.UpdateSellerInfoRequestDto dto)
+        {
+            var seller = await _sellerRepository.GetByIdAsync(sellerId);
+            if (seller == null)
+                throw new Exception("Seller not found.");
+
+            seller.DisplayName = dto.DisplayName;
+            seller.Description = dto.Description;
+
+            await _sellerRepository.UpdateAsync(seller);
+        }
     }
 }
-

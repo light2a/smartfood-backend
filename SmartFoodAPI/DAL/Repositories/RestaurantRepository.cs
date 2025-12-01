@@ -121,6 +121,13 @@ namespace DAL.Repositories
                 .ToListAsync();
         }
         
+        public async Task<IEnumerable<Restaurant>> GetBySellerIdAsync(int sellerId)
+        {
+            return await _context.Restaurants
+                .Where(r => r.SellerId == sellerId)
+                .Include(r => r.Area)
+                .AsNoTracking()
+                .ToListAsync();
+        }
     }
 }
-

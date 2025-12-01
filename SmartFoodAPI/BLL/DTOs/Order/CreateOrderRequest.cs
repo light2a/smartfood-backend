@@ -21,5 +21,9 @@ namespace BLL.DTOs.Order
         // ✅ Enum automatically appears as dropdown in Swagger
         [Required]
         public OrderType OrderType { get; set; } = OrderType.Pickup;
+
+        public string? DeliveryAddress { get; set; }
+        public double? DeliveryLatitude { get; set; }
+        public double? DeliveryLongitude { get; set; }
     }
 }

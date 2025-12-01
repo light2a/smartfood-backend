@@ -158,5 +158,11 @@ namespace BLL.Services
                 LogoUrl = r.LogoUrl
             });
         }
+
+        public async Task<IEnumerable<RestaurantDto>> GetBySellerIdAsync(int sellerId)
+        {
+            var list = await _repo.GetBySellerIdAsync(sellerId);
+            return list.Select(ToDto);
+        }
     }
 }

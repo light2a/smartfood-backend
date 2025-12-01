@@ -30,5 +30,6 @@ namespace BLL.IServices
         Task<Account> DeactivateAccountAsync(int accountId);
         Task BanAccountAsync(int accountId, bool isBanned);
         IQueryable<Account> GetAll();
+        Task<Account?> GetAccountByIdAsync(int accountId);
     }
 }
