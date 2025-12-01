@@ -325,6 +325,7 @@ namespace BLL.Services
                     FinalAmount = o.FinalAmount,
                     CreatedAt = o.CreatedAt,
                     RestaurantName = o.Restaurant?.Name,
+                    DeliveryAddress = o.DeliveryAddress,
                     Items = o.OrderItems.Select(i => new OrderItemDetailDto
                     {
                         MenuItemName = i.MenuItem.Name,

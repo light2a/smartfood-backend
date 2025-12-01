@@ -15,6 +15,7 @@ namespace BLL.DTOs.Order
 
         public string RestaurantName { get; set; }
         public string? RestaurantAddress { get; set; }
+        public string? DeliveryAddress { get; set; }
 
         public List<OrderItemDetailDto> Items { get; set; } = new();
         public List<OrderStatusHistoryDto> StatusHistory { get; set; } = new();
