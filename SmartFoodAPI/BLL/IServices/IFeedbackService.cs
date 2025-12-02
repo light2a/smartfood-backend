@@ -17,5 +17,7 @@ namespace BLL.IServices
         //Task UpdateAsync(int id, UpdateFeedbackRequest request);
         Task DeleteAsync(int id);
         Task<IEnumerable<FeedbackDto>> SearchAsync(string keyword);
+        Task<IEnumerable<FeedbackDto>> GetByMenuItemAsync(int menuItemId);
+
     }
 }

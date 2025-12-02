@@ -16,5 +16,7 @@ namespace DAL.IRepositories
         //Task UpdateAsync(Feedback feedback);
         Task DeleteAsync(int id);
         Task<IEnumerable<Feedback>> SearchAsync(string keyword);
+        Task<IEnumerable<Feedback>> GetByMenuItemAsync(int menuItemId);
+
     }
 }
