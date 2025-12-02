@@ -243,15 +243,13 @@ namespace SmartFoodAPI.Controllers
             if (account.IsActive == true)
                 return Ok(new { message = "Account is already verified." });
 
-            var currentOtp = await _authService.GetCurrentOtpAsync(request.Email);
-            if (currentOtp != null && currentOtp.Expiration > DateTime.UtcNow)
-            {
-                return Ok(new { message = "Your OTP is still active. Please use the existing OTP." });
-            }
-
+            // Always generate a new OTP when resend is requested
             var otpCode = new Random().Next(100000, 999999).ToString();
             var expiration = DateTime.UtcNow.AddMinutes(5);
 
+            // Invalidate any existing OTP first to ensure a clean slate
+            await _authService.InvalidateOtpAsync(request.Email);
+            
             bool otpSaved = await _authService.SaveOtpAsync(request.Email, otpCode, expiration);
             if (!otpSaved)
                 return StatusCode(500, "Failed to generate OTP.");

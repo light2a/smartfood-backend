@@ -28,6 +28,7 @@ namespace BLL.IServices
         Task<OtpInfo> GetCurrentOtpAsync(string email);
         Task<Account> UpdateAccountAsync(int accountId, string fullName, string phoneNumber);
         Task<Account> DeactivateAccountAsync(int accountId);
+        Task ActivateAccountAsync(string email);
         Task BanAccountAsync(int accountId, bool isBanned);
         IQueryable<Account> GetAll();
         Task<Account?> GetAccountByIdAsync(int accountId);

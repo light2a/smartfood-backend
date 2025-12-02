@@ -57,7 +57,7 @@ namespace BLL.Services
                 FullName = fullName,
                 Email = email,
                 Password = BCrypt.Net.BCrypt.HashPassword(password),
-                IsActive = true,
+                IsActive = false,
                 RoleId = 1,
                 PhoneNumber = phoneNumber,
                 CreatedAt = DateTime.UtcNow,
@@ -107,17 +107,19 @@ namespace BLL.Services
         {
             var otpInfo = new { Code = otp, Expiration = expiration };
             var otpJson = JsonSerializer.Serialize(otpInfo);
+            _logger.LogInformation("Saving OTP for email: {Email}, OTP: {Otp}, Expiration: {Expiration} (UTC)", email, otp, expiration);
 
             try
             {
-                await _cache.SetStringAsync($"OTP_{email}", otpJson, new DistributedCacheEntryOptions
+                await _cache.SetStringAsync(GetOtpCacheKey(email), otpJson, new DistributedCacheEntryOptions
                 {
                     AbsoluteExpiration = expiration
                 });
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to save OTP for email: {Email}", email);
                 return false;
             }
         }
@@ -125,14 +127,53 @@ namespace BLL.Services
         // ✅ OTP Verify
         public async Task<bool> VerifyOtpAsync(string email, string otp)
         {
-            var cached = await _cache.GetStringAsync($"OTP_{email}");
-            if (cached == null) return false;
+            _logger.LogInformation("Attempting to verify OTP for email: {Email}, provided OTP: {Otp}", email, otp);
+            var cacheKey = GetOtpCacheKey(email);
+            var cached = await _cache.GetStringAsync(cacheKey);
 
-            var otpInfo = JsonSerializer.Deserialize<OtpInfo>(cached);
-            if (otpInfo == null || otpInfo.Expiration < DateTime.UtcNow || otpInfo.Code != otp)
+            if (cached == null)
+            {
+                _logger.LogWarning("OTP not found in cache for email: {Email}", email);
                 return false;
+            }
 
-            await _cache.RemoveAsync($"OTP_{email}");
+            OtpInfo? otpInfo = null;
+            try
+            {
+                otpInfo = JsonSerializer.Deserialize<OtpInfo>(cached);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize OTP from cache for email: {Email}. Cached value: {CachedValue}", email, cached);
+                return false;
+            }
+
+            if (otpInfo == null)
+            {
+                _logger.LogWarning("Deserialized OTP info is null for email: {Email}. Cached value: {CachedValue}", email, cached);
+                return false;
+            }
+
+            _logger.LogInformation("Cached OTP for {Email}: Code={CachedOtp}, Expiration={Expiration} (UTC)", email, otpInfo.Code, otpInfo.Expiration);
+
+            if (otpInfo.Expiration < DateTime.UtcNow)
+            {
+                _logger.LogWarning("OTP for email: {Email} has expired. Current UTC: {CurrentUtc}, Expiration UTC: {ExpirationUtc}", email, DateTime.UtcNow, otpInfo.Expiration);
+                await _cache.RemoveAsync(cacheKey); // Remove expired OTP
+                return false;
+            }
+
+            if (otpInfo.Code != otp)
+            {
+                _logger.LogWarning("OTP mismatch for email: {Email}. Provided OTP: {ProvidedOtp}, Cached OTP: {CachedOtp}", email, otp, otpInfo.Code);
+                return false;
+            }
+
+            await _cache.RemoveAsync(cacheKey); // Remove OTP after successful verification
+            _logger.LogInformation("OTP for email: {Email} successfully verified. Activating account.", email);
+            
+            // Activate the account after successful OTP verification
+            await ActivateAccountAsync(email);
             return true;
         }
 
@@ -278,6 +319,21 @@ namespace BLL.Services
             account.UpdateAt = DateTime.UtcNow;
 
             return await _accountRepository.UpdateAsync(account);
+        }
+
+        public async Task ActivateAccountAsync(string email)
+        {
+            var account = await _accountRepository.GetByEmailAsync(email);
+            if (account == null)
+            {
+                _logger.LogWarning("Attempted to activate non-existent account with email: {Email}", email);
+                throw new Exception("Account not found.");
+            }
+
+            account.IsActive = true;
+            account.UpdateAt = DateTime.UtcNow;
+            await _accountRepository.UpdateAsync(account);
+            _logger.LogInformation("Account with email: {Email} has been activated.", email);
         }
 
         public async Task BanAccountAsync(int accountId, bool isBanned)
