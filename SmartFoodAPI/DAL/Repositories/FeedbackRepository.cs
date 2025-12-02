@@ -76,5 +76,16 @@ namespace DAL.Repositories
         //    _context.Feedbacks.Update(feedback);
         //    await _context.SaveChangesAsync();
         //}
+        public async Task<IEnumerable<Feedback>> GetByMenuItemAsync(int menuItemId)
+        {
+            return await _context.Feedbacks
+                .Include(f => f.Order)
+                    .ThenInclude(o => o.OrderItems)
+                .Include(f => f.Customer)
+                .Where(f => f.Order.OrderItems.Any(oi => oi.MenuItemId == menuItemId))
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
     }
 }

@@ -103,5 +103,20 @@ namespace BLL.Services
                 CreatedAt = f.CreatedAt
             });
         }
+        public async Task<IEnumerable<FeedbackDto>> GetByMenuItemAsync(int menuItemId)
+        {
+            var feedbackList = await _repo.GetByMenuItemAsync(menuItemId);
+
+            return feedbackList.Select(f => new FeedbackDto
+            {
+                Id = f.Id,
+                CustomerAccountId = f.CustomerAccountId,
+                Comment = f.Comment,
+                Rating = f.Rating,
+                OrderId = f.OrderId,
+                CreatedAt = f.CreatedAt,
+                CustomerName = f.Customer.FullName
+            });
+        }
     }
 }
