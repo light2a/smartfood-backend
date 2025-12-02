@@ -27,10 +27,10 @@ namespace BLL.Services
             {
                 throw new InvalidOperationException("Resend API key is not configured.");
             }
-            _senderEmail = "no-reply@smartfood.dpdns.org";
+            _senderEmail = "support@smartfood.dpdns.org";
         }
 
-        private async Task SendEmailAsync(string email, string subject, string htmlBody)
+        private async Task SendEmailAsync(string email, string subject, string htmlBody, string plainTextBody)
         {
             var httpClient = _httpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _resendApiKey);
@@ -40,7 +40,11 @@ namespace BLL.Services
                 from = _senderEmail,
                 to = email,
                 subject = subject,
-                html = htmlBody
+                html = htmlBody,
+                text = plainTextBody,
+                // Disable click tracking and open tracking
+                enable_tracking = false,
+                enable_performance_tracking = false
             };
 
             var jsonPayload = JsonSerializer.Serialize(payload);
@@ -70,8 +74,9 @@ namespace BLL.Services
                 string frontendLink = $"{baseUrl}?email={email}&token={token}";
                 string htmlBody = $@"<p>Please reset your password by clicking this link:</p>
                                    <a href='{frontendLink}'>Reset Password</a>";
+                string plainTextBody = $"Please reset your password by clicking this link: {frontendLink}";
 
-                await SendEmailAsync(email, "Reset Your Password", htmlBody);
+                await SendEmailAsync(email, "Reset Your Password", htmlBody, plainTextBody);
             }
             catch (Exception ex)
             {
@@ -119,7 +124,23 @@ namespace BLL.Services
     </div>
 </body>
 </html>";
-                await SendEmailAsync(email, "Your OTP Code", htmlBody);
+                string plainTextBody = $@"Hello,
+
+Thank you for registering with SmartFood. Please use the following One-Time Password (OTP) to verify your account. The code is valid for 5 minutes.
+
+Your OTP Code: {otp}
+
+For your security, please do not share this code with anyone.
+
+If you did not request this, please ignore this email.
+
+Best regards,
+The SmartFood Team
+
+© 2025 SmartFood. All rights reserved.
+This is an automated message, please do not reply.
+";
+                await SendEmailAsync(email, "Your OTP Code", htmlBody, plainTextBody);
             }
             catch (Exception ex)
             {
