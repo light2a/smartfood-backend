@@ -104,7 +104,6 @@ namespace BLL.Services
         .header {{ font-size: 24px; font-weight: bold; color: #444; text-align: center; margin-bottom: 20px; }}
         .otp-code {{ font-size: 28px; font-weight: bold; color: #0056b3; text-align: center; margin: 20px 0; letter-spacing: 4px; }}
         .footer {{ margin-top: 20px; font-size: 12px; color: #777; text-align: center; }}
-        .warning {{ font-size: 14px; color: #c00; text-align: center; }}
     </style>
 </head>
 <body>
@@ -113,13 +112,12 @@ namespace BLL.Services
         <p>Hello,</p>
         <p>Thank you for registering with SmartFood. Please use the following One-Time Password (OTP) to verify your account. The code is valid for 5 minutes.</p>
         <div class=""otp-code"">{otp}</div>
-        <p class=""warning"">For your security, please do not share this code with anyone.</p>
+        <p>For your security, please do not share this code with anyone.</p>
         <p>If you did not request this, please ignore this email.</p>
         <br>
         <p>Best regards,<br>The SmartFood Team</p>
         <div class=""footer"">
             <p>&copy; 2025 SmartFood. All rights reserved.</p>
-            <p>This is an automated message, please do not reply.</p>
         </div>
     </div>
 </body>
@@ -138,7 +136,6 @@ Best regards,
 The SmartFood Team
 
 © 2025 SmartFood. All rights reserved.
-This is an automated message, please do not reply.
 ";
                 await SendEmailAsync(email, "Your OTP Code", htmlBody, plainTextBody);
             }
