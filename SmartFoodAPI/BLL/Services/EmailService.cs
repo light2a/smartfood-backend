@@ -86,7 +86,39 @@ namespace BLL.Services
             {
                 _logger.LogInformation("Attempting to send OTP email to {Email} via Resend API", email);
 
-                string htmlBody = $"Your OTP code is: <strong>{otp}</strong>. It is valid for 5 minutes.";
+                string htmlBody = $@"
+<!DOCTYPE html>
+<html lang=""en"">
+<head>
+    <meta charset=""UTF-8"">
+    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
+    <title>Your OTP Code</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ width: 90%; max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; }}
+        .header {{ font-size: 24px; font-weight: bold; color: #444; text-align: center; margin-bottom: 20px; }}
+        .otp-code {{ font-size: 28px; font-weight: bold; color: #0056b3; text-align: center; margin: 20px 0; letter-spacing: 4px; }}
+        .footer {{ margin-top: 20px; font-size: 12px; color: #777; text-align: center; }}
+        .warning {{ font-size: 14px; color: #c00; text-align: center; }}
+    </style>
+</head>
+<body>
+    <div class=""container"">
+        <div class=""header"">SmartFood Verification</div>
+        <p>Hello,</p>
+        <p>Thank you for registering with SmartFood. Please use the following One-Time Password (OTP) to verify your account. The code is valid for 5 minutes.</p>
+        <div class=""otp-code"">{otp}</div>
+        <p class=""warning"">For your security, please do not share this code with anyone.</p>
+        <p>If you did not request this, please ignore this email.</p>
+        <br>
+        <p>Best regards,<br>The SmartFood Team</p>
+        <div class=""footer"">
+            <p>&copy; 2025 SmartFood. All rights reserved.</p>
+            <p>This is an automated message, please do not reply.</p>
+        </div>
+    </div>
+</body>
+</html>";
                 await SendEmailAsync(email, "Your OTP Code", htmlBody);
             }
             catch (Exception ex)
