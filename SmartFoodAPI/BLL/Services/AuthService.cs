@@ -288,5 +288,10 @@ namespace BLL.Services
         {
             return _accountRepository.GetAll();
         }
+
+        public async Task<Account?> GetAccountByIdAsync(int accountId)
+        {
+            return await _accountRepository.GetByIdAsync(accountId);
+        }
     }
 }

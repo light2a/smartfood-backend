@@ -91,7 +91,7 @@ namespace SmartFoodAPI.Controllers
         }
 
         [HttpPut("{orderId}/status")]
-        [Authorize(Roles = "admin,manager,seller")]
+        [Authorize(Roles = "admin,manager,seller,Seller")]
         public async Task<IActionResult> UpdateStatus(int orderId, [FromQuery] string newStatus, [FromQuery] string? note)
         {
             try
@@ -157,6 +157,63 @@ namespace SmartFoodAPI.Controllers
                     return BadRequest(new { error = "Order cannot be cancelled." });
 
                 return Ok(new { message = $"Order {orderId} has been cancelled successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("calculate-shipping")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> CalculateShipping([FromBody] CalculateShippingFeeRequest request)
+        {
+            try
+            {
+                var fee = await _orderService.CalculateShippingFeeAsync(request.RestaurantId, request.Latitude, request.Longitude);
+                return Ok(new { shippingFee = fee });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [Authorize(Roles = "Seller")]
+        [HttpGet("seller")]
+        public async Task<IActionResult> GetSellerOrders([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? keyword = null)
+        {
+            try
+            {
+                var sellerIdClaim = User.FindFirst("SellerId")?.Value;
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing Seller ID." });
+
+                int sellerId = int.Parse(sellerIdClaim);
+
+                var result = await _orderService.GetPagedBySellerAsync(sellerId, pageNumber, pageSize, keyword);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [Authorize(Roles = "Seller")]
+        [HttpGet("seller/revenue")]
+        public async Task<IActionResult> GetSellerRevenue()
+        {
+            try
+            {
+                var sellerIdClaim = User.FindFirst("SellerId")?.Value;
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing Seller ID." });
+
+                int sellerId = int.Parse(sellerIdClaim);
+
+                var revenue = await _orderService.GetSellerRevenueAsync(sellerId);
+                return Ok(new { revenue });
             }
             catch (Exception ex)
             {

@@ -16,6 +16,9 @@ namespace DAL.Models
         public decimal CommissionPercent { get; set; }
         public decimal FinalAmount { get; set; }
         public OrderType OrderType { get; set; } 
+        public string? DeliveryAddress { get; set; }
+        public double? DeliveryLatitude { get; set; }
+        public double? DeliveryLongitude { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public virtual Account Customer { get; set; }

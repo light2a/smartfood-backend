@@ -50,7 +50,7 @@ namespace SmartFoodAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin,Seller,seller")]
         public async Task<IActionResult> Create([FromForm] CreateRestaurantRequest request, IFormFile? logo)
         {
             var created = await _service.CreateAsync(request, logo);
@@ -58,7 +58,7 @@ namespace SmartFoodAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin,Seller,seller")]
         public async Task<IActionResult> Update(int id, [FromForm] UpdateRestaurantRequest request, IFormFile? logo)
         {
             await _service.UpdateAsync(id, request, logo);
@@ -67,7 +67,7 @@ namespace SmartFoodAPI.Controllers
 
         // Xoá
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin,Seller,seller")]
         public async Task<IActionResult> Delete(int id)
         {
             await _service.DeleteAsync(id);
@@ -84,7 +84,7 @@ namespace SmartFoodAPI.Controllers
 
         // Toggle IsActive
         [HttpPatch("{id:int}/status")]
-        [Authorize(Roles = "Admin,Seller")]
+        [Authorize(Roles = "Admin,Seller,seller")]
         public async Task<IActionResult> ToggleActive(int id, [FromQuery] bool isActive)
         {
             await _service.ToggleActiveAsync(id, isActive);
@@ -95,6 +95,27 @@ namespace SmartFoodAPI.Controllers
         {
             var result = await _service.SearchByMenuItemNameAsync(keyword);
             return Ok(result);
+        }
+
+        [Authorize(Roles = "Seller,seller")]
+        [HttpGet("my-restaurants")]
+        public async Task<IActionResult> GetMyRestaurants()
+        {
+            try
+            {
+                var sellerIdClaim = User.FindFirst("SellerId")?.Value;
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Invalid token or missing Seller ID." });
+
+                int sellerId = int.Parse(sellerIdClaim);
+
+                var restaurants = await _service.GetBySellerIdAsync(sellerId);
+                return Ok(restaurants);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
     }
 }
