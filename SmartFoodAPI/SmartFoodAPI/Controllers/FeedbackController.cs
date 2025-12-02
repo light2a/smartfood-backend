@@ -1,5 +1,6 @@
 ﻿using BLL.DTOs.Feedback;
 using BLL.IServices;
+using BLL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,9 +11,11 @@ namespace SmartFoodAPI.Controllers
     public class FeedbackController : ControllerBase
     {
         private readonly IFeedbackService _service;
-        public FeedbackController(IFeedbackService service)
+        private readonly ILogger<FeedbackController> _logger;
+        public FeedbackController(IFeedbackService service, ILogger<FeedbackController> logger)
         {
             _service = service;
+            _logger = logger;
         }
         [HttpGet]
         public async Task<IActionResult> GetAll() => Ok(await _service.GetAllAsync());
@@ -57,6 +60,25 @@ namespace SmartFoodAPI.Controllers
             var result = await _service.SearchAsync(keyword);
             return Ok(result);
         }
+        [HttpGet("menuitems/{menuItemId}/feedback")]
+        public async Task<IActionResult> GetFeedbackByMenuItem(int menuItemId)
+        {
+            try
+            {
+                var result = await _service.GetByMenuItemAsync(menuItemId);
+
+                if (!result.Any())
+                    return NotFound(new { message = "Không có feedback cho món ăn này." });
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[MenuItemController] Error getting feedback for menu item");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
     }
 }
 

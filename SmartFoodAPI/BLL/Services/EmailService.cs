@@ -27,7 +27,7 @@ namespace BLL.Services
             {
                 throw new InvalidOperationException("Resend API key is not configured.");
             }
-            _senderEmail = "onboarding@resend.dev";
+            _senderEmail = "no-reply@smartfood.dpdns.org";
         }
 
         private async Task SendEmailAsync(string email, string subject, string htmlBody)
