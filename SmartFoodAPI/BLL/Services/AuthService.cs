@@ -57,7 +57,7 @@ namespace BLL.Services
                 FullName = fullName,
                 Email = email,
                 Password = BCrypt.Net.BCrypt.HashPassword(password),
-                IsActive = false,
+                IsActive = true,
                 RoleId = 1,
                 PhoneNumber = phoneNumber,
                 CreatedAt = DateTime.UtcNow,
