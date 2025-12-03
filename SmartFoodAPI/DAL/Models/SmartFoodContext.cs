@@ -83,6 +83,9 @@ namespace DAL.Models
                   .HasDefaultValue(SellerStatus.Unavailable)
                   .IsRequired();
 
+                entity.Property(e => e.BankCode)
+                    .HasConversion<string>();
+
                 entity.HasOne(s => s.User)
                     .WithMany()
                     .HasForeignKey(s => s.UserAccountId)
