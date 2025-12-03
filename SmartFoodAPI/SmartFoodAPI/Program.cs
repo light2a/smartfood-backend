@@ -51,10 +51,23 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddSingleton<PayOSClient>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
+    var logger = sp.GetRequiredService<ILogger<Program>>();
+
+    var clientId = config["PayOS:ClientId"];
+    var apiKey = config["PayOS:ApiKey"];
+    var checksumKey = config["PayOS:ChecksumKey"];
+
+    logger.LogInformation("PayOS ClientId: {ClientId}", clientId);
+    logger.LogInformation("PayOS ApiKey: {ApiKey}", apiKey);
+    logger.LogInformation("PayOS ChecksumKey: {ChecksumKey}", checksumKey);
+    logger.LogInformation("PayOS PayoutClientId: {PayoutClientId}", config["PayOS:PayoutClientId"]);
+    logger.LogInformation("PayOS PayoutApiKey: {PayoutApiKey}", config["PayOS:PayoutApiKey"]);
+    logger.LogInformation("PayOS PayoutChecksumKey: {PayoutChecksumKey}", config["PayOS:PayoutChecksumKey"]);
+
     return new PayOSClient(
-        clientId: config["PayOS:ClientId"],
-        apiKey: config["PayOS:ApiKey"],
-        checksumKey: config["PayOS:ChecksumKey"]
+        clientId: clientId,
+        apiKey: apiKey,
+        checksumKey: checksumKey
     );
 });
 

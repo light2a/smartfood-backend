@@ -27,19 +27,15 @@ public class PaymentService : IPaymentService
     private readonly IServiceScopeFactory _scopeFactory;
 
     public PaymentService(
+        PayOSClient client,
         IConfiguration config,
         IOrderRepository orderRepo,
         ISellerRepository sellerRepo,
         ILogger<PaymentService> logger,
         IServiceScopeFactory scopeFactory)
     {
+        _client = client;
         _config = config;
-        _client = new PayOSClient(
-            config["PayOS:ClientId"],
-            config["PayOS:ApiKey"],
-            config["PayOS:ChecksumKey"]
-        );
-
         _orderRepo = orderRepo;
         _sellerRepo = sellerRepo;
         _logger = logger;
@@ -157,6 +153,13 @@ public class PaymentService : IPaymentService
 
     private async Task ProcessPayoutAsync(int orderId, ISellerRepository sellerRepo, IOrderRepository orderRepo)
     {
+        _logger.LogInformation("Initializing payout client with payout-specific credentials.");
+        var payoutClient = new PayOSClient(
+            _config["PayOS:PayoutClientId"],
+            _config["PayOS:PayoutApiKey"],
+            _config["PayOS:PayoutChecksumKey"]
+        );
+
         try
         {
             _logger.LogInformation($"💰 Starting payout process for order {orderId}");
@@ -208,7 +211,7 @@ public class PaymentService : IPaymentService
 
             _logger.LogInformation($"📤 Sending payout request: {JsonSerializer.Serialize(payoutRequest)}");
 
-            var payoutResult = await _client.Payouts.CreateAsync(payoutRequest);
+            var payoutResult = await payoutClient.Payouts.CreateAsync(payoutRequest);
 
             _logger.LogInformation($"✅ Payout created successfully!");
             _logger.LogInformation($"   - Payout ID: {payoutResult.Id}");
