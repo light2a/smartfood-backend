@@ -86,6 +86,12 @@ namespace DAL.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
+        public async Task<Feedback?> GetByOrderIdAsync(int orderId)
+        {
+            return await _context.Feedbacks
+                .Include(f => f.Customer)
+                .FirstOrDefaultAsync(f => f.OrderId == orderId);
+        }
 
     }
 }

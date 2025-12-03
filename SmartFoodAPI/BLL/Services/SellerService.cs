@@ -1,14 +1,18 @@
-﻿using BLL.IServices;
+﻿using BLL.DTOs.Seller;
+using BLL.Extensions;
+using BLL.IServices;
 using DAL.IRepositories;
 using DAL.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Stripe;
+using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Threading.Tasks;
 
 namespace BLL.Services
 {
@@ -101,6 +105,20 @@ namespace BLL.Services
             seller.Description = dto.Description;
 
             await _sellerRepository.UpdateAsync(seller);
+        }
+
+        public async Task<SellerBankInfoResponse> GetBankInfoAsync(int sellerId)
+        {
+            var seller = await _sellerRepository.GetByIdAsync(sellerId);
+            if (seller == null)
+                throw new Exception("Seller not found.");
+
+            return new SellerBankInfoResponse
+            {
+                BankAccountNumber = seller.BankAccountNumber,
+                BankCode = seller.BankCode,
+                BankName = seller.BankCode?.GetDescription()
+            };
         }
     }
 }

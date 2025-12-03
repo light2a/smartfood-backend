@@ -32,6 +32,22 @@ namespace SmartFoodAPI.Controllers
             if (feedback == null) return NotFound();
             return Ok(feedback);
         }
+        [HttpGet("order/{orderId:int}")]
+        public async Task<IActionResult> GetByOrderId(int orderId)
+        {
+            try
+            {
+                var feedback = await _service.GetByOrderIdAsync(orderId);
+                if (feedback == null) return NotFound(new { message = "No feedback found for this order." });
+                return Ok(feedback);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[FeedbackController] Error getting feedback for order {orderId}", orderId);
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Create([FromBody] CreateFeedbackRequest request)

@@ -118,5 +118,21 @@ namespace BLL.Services
                 CustomerName = f.Customer.FullName
             });
         }
+        public async Task<FeedbackDto?> GetByOrderIdAsync(int orderId)
+        {
+            var f = await _repo.GetByOrderIdAsync(orderId);
+            if (f == null) return null;
+
+            return new FeedbackDto
+            {
+                Id = f.Id,
+                CustomerAccountId = f.CustomerAccountId,
+                Comment = f.Comment,
+                Rating = f.Rating,
+                OrderId = f.OrderId,
+                CreatedAt = f.CreatedAt,
+                CustomerName = f.Customer?.FullName
+            };
+        }
     }
 }

@@ -183,6 +183,29 @@ namespace SmartFoodAPI.Controllers
         }
 
         // ===============================
+        // ✅ Get Seller Bank Info
+        // ===============================
+        [HttpGet("bank-info")]
+        public async Task<IActionResult> GetBankInfo()
+        {
+            try
+            {
+                var sellerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "SellerId");
+                if (sellerIdClaim == null)
+                    return Unauthorized(new { error = "Seller ID not found in token." });
+
+                int sellerId = int.Parse(sellerIdClaim.Value);
+                var bankInfo = await _sellerService.GetBankInfoAsync(sellerId);
+                return Ok(bankInfo);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "[SellerController] Failed to get bank info for seller");
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // ===============================
         // ✅ Update Seller Bank Info
         // ===============================
         [HttpPut("bank-info")]
